@@ -2,6 +2,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ChevronDown,
+  ChevronUp,
   Minus,
   Plus,
   Printer,
@@ -19,10 +21,12 @@ import { ErrorNotice, Loading } from "@/components/ui";
 
 type CartLine = { product: Product; quantity: number };
 const choiceClass = (active: boolean) =>
-  active ? "btn-primary py-2.5" : "btn-ghost py-2.5";
+  active
+    ? "btn-primary !px-2 !py-1.5 text-xs"
+    : "btn-ghost !px-2 !py-1.5 text-xs";
 const categoryClass = (active: boolean) =>
   [
-    "shrink-0 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-extrabold transition",
+    "grow whitespace-nowrap rounded-full px-2 py-1 text-[9px] font-extrabold leading-4 transition",
     active
       ? "bg-[#e7562c] text-white shadow-sm hover:bg-[#bd3519]"
       : "border border-[#eadfd3] bg-white text-[#493a31] hover:border-[#f1a080] hover:bg-[#fff3ec] hover:text-[#d94722]",
@@ -45,6 +49,7 @@ export default function PosPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3>(1);
   const [customerName, setCustomerName] = useState("");
   const [orderType, setOrderType] = useState<"DINE_IN" | "TAKEAWAY">("DINE_IN");
@@ -144,6 +149,7 @@ export default function PosPage() {
   }
   function reset() {
     setCart([]);
+    setIsCartOpen(false);
     setCheckoutStep(1);
     setCustomerName("");
     setOrderType("DINE_IN");
@@ -161,7 +167,7 @@ export default function PosPage() {
     return <Loading />;
   return (
     <>
-      <div className="no-print grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_440px] 2xl:grid-cols-[minmax(0,1fr)_500px]">
+      <div className="no-print grid items-start gap-6 pb-20 xl:grid-cols-[minmax(0,1fr)_440px] xl:pb-0 2xl:grid-cols-[minmax(0,1fr)_500px]">
         <section className="min-w-0">
           <div className="card sticky top-20 z-10 mb-5 bg-[#fffdfa]/95 p-3 shadow-[0_14px_35px_rgba(75,47,31,0.12)] backdrop-blur-xl sm:p-4">
             <div className="relative">
@@ -176,14 +182,14 @@ export default function PosPage() {
               />
             </div>
             <div
-              className="mt-3 flex max-w-full snap-x gap-2 overflow-x-auto pb-1 [scrollbar-color:#e7b39f_transparent] [scrollbar-width:thin]"
+              className="mt-2 flex max-w-full flex-wrap gap-1"
               aria-label="Filter kategori produk"
             >
               <button
                 type="button"
                 aria-pressed={category === "all"}
                 onClick={() => setCategory("all")}
-                className={`${categoryClass(category === "all")} snap-start`}
+                className={categoryClass(category === "all")}
               >
                 Semua
               </button>
@@ -193,14 +199,14 @@ export default function PosPage() {
                   key={item.id}
                   aria-pressed={category === item.id}
                   onClick={() => setCategory(item.id)}
-                  className={`${categoryClass(category === item.id)} snap-start`}
+                  className={categoryClass(category === item.id)}
                 >
                   {item.name}
                 </button>
               ))}
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {filtered.map((product) => (
               <button
                 key={product.id}
@@ -222,19 +228,19 @@ export default function PosPage() {
                     <UtensilsCrossed size={42} className="text-[#e7562c]/45" />
                   )}
                   {product.trackStock && (
-                    <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-xs font-bold text-[#796c63] shadow-sm">
+                    <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-[#796c63] shadow-sm">
                       Stok {product.stock}
                     </span>
                   )}
                 </div>
-                <p className="mt-3 text-xs font-bold text-[#9b8a7d]">
+                <p className="mt-3 text-[10px] font-bold text-[#9b8a7d]">
                   {product.category.name}
                 </p>
-                <h3 className="mt-1 line-clamp-2 min-h-12 text-base font-black group-hover:text-[#e7562c]">
+                <h3 className="mt-1 line-clamp-2 min-h-10 text-sm font-black group-hover:text-[#e7562c]">
                   {product.name}
                 </h3>
                 <div className="mt-2 flex items-center justify-between gap-3">
-                  <p className="font-black text-[#e7562c]">
+                  <p className="text-sm font-black text-[#e7562c]">
                     {rupiah(product.price)}
                   </p>
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#f04e2a] text-white shadow-sm transition group-hover:scale-105">
@@ -250,8 +256,49 @@ export default function PosPage() {
             </p>
           )}
         </section>
-        <aside className="card h-fit overflow-clip xl:sticky xl:top-20 xl:flex xl:max-h-[calc(100vh-6rem)] xl:flex-col">
-          <div className="flex shrink-0 items-center gap-3 border-b border-[#eadfd3] p-5">
+        {isCartOpen && (
+          <button
+            type="button"
+            aria-label="Tutup panel pesanan"
+            className="fixed inset-0 z-20 bg-black/35 backdrop-blur-[1px] xl:hidden"
+            onClick={() => setIsCartOpen(false)}
+          />
+        )}
+        <aside className="card fixed bottom-3 left-3 right-3 z-30 flex max-h-[calc(100dvh-5.5rem)] flex-col overflow-clip shadow-[0_-12px_35px_rgba(75,47,31,0.18)] lg:left-[100px] xl:sticky xl:inset-auto xl:top-20 xl:z-auto xl:h-fit xl:max-h-[calc(100vh-6rem)]">
+          {!isCartOpen && (
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 px-4 py-3 text-left xl:hidden"
+              onClick={() => {
+                if (cart.length) setCheckoutStep(2);
+                setIsCartOpen(true);
+              }}
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#fff0e8] text-[#e7562c]">
+                <ShoppingCart size={20} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-black">
+                  {cart.length
+                    ? `${cart.reduce((sum, line) => sum + line.quantity, 0)} item dalam pesanan`
+                    : "Keranjang masih kosong"}
+                </span>
+                <span className="block text-xs font-bold text-[#796c63]">
+                  {cart.length ? "Ketuk untuk detail & pembayaran" : "Pilih menu untuk mulai memesan"}
+                </span>
+              </span>
+              <span className="text-right">
+                <b className="block text-sm text-[#e7562c]">
+                  {rupiah(total)}
+                </b>
+                <ChevronUp className="ml-auto mt-0.5 text-[#796c63]" size={18} />
+              </span>
+            </button>
+          )}
+          <div
+            className={`${isCartOpen ? "flex" : "hidden"} min-h-0 flex-col xl:flex xl:flex-1`}
+          >
+          <div className="flex shrink-0 items-center gap-3 border-b border-[#eadfd3] p-3 xl:p-5">
             <ShoppingCart size={28} />
             <div className="flex-1">
               <h2 className="text-xl font-black">
@@ -262,6 +309,15 @@ export default function PosPage() {
               </h2>
             </div>
             <button
+              type="button"
+              aria-label="Tutup panel pesanan"
+              onClick={() => setIsCartOpen(false)}
+              className="rounded-xl border border-[#eadfd3] bg-white p-2.5 text-[#796c63] xl:hidden"
+            >
+              <ChevronDown size={20} />
+            </button>
+            <button
+              type="button"
               aria-label="Kosongkan pesanan"
               title="Kosongkan pesanan"
               disabled={!cart.length}
@@ -274,7 +330,7 @@ export default function PosPage() {
               <Trash2 size={20} />
             </button>
           </div>
-          <div className="grid shrink-0 grid-cols-3 gap-2 border-b border-[#eadfd3] bg-[#fffdfa] px-4 py-3">
+          <div className="grid shrink-0 grid-cols-3 gap-2 border-b border-[#eadfd3] bg-[#fffdfa] px-3 py-2 xl:px-4 xl:py-3">
             {(
               [
                 [1, "Pesanan"],
@@ -316,7 +372,7 @@ export default function PosPage() {
           </div>
 
           {checkoutStep === 1 && (
-            <div className="xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-y-auto">
               <div className="max-h-[42vh] min-h-48 space-y-3 overflow-y-auto p-4">
                 {cart.map((line) => (
                   <div
@@ -394,7 +450,8 @@ export default function PosPage() {
           )}
 
           {checkoutStep === 2 && (
-            <div className="space-y-5 bg-[#fffdfa] p-5 xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
+            <div className="flex min-h-0 flex-1 flex-col bg-[#fffdfa]">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 sm:p-4 xl:space-y-5 xl:p-5">
               <label>
                 <span className="label">NAMA CUSTOMER</span>
                 <input
@@ -406,9 +463,9 @@ export default function PosPage() {
                   placeholder="Masukkan nama customer"
                 />
               </label>
-              <div className="rounded-xl bg-[#fff1e9] p-4">
-                <p className="mb-4 font-black">Pilihan pesanan</p>
-                <div className="grid grid-cols-2 gap-5">
+              <div className="rounded-xl bg-[#fff1e9] p-3 xl:p-4">
+                <p className="mb-3 font-black xl:mb-4">Pilihan pesanan</p>
+                <div className="grid grid-cols-2 gap-3 xl:gap-5">
                   <div>
                     <span className="label">TEMPAT</span>
                     <div className="grid gap-2">
@@ -497,7 +554,8 @@ export default function PosPage() {
                   placeholder="Contoh: tanpa topping, dll"
                 />
               </label>
-              <div className="grid grid-cols-2 gap-3 border-t border-[#eadfd3] pt-4">
+              </div>
+              <div className="grid shrink-0 grid-cols-2 gap-3 border-t border-[#eadfd3] bg-[#fffdfa] p-3 shadow-[0_-10px_24px_rgba(75,47,31,0.06)] xl:p-4">
                 <button
                   type="button"
                   className="btn-ghost"
@@ -519,8 +577,8 @@ export default function PosPage() {
 
           {checkoutStep === 3 && (
             <div className="flex min-h-0 flex-1 flex-col bg-[#fffdfa]">
-              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
-                <div className="rounded-xl border border-[#eadfd3] bg-white p-4">
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3 xl:space-y-4 xl:p-5">
+                <div className="rounded-xl border border-[#eadfd3] bg-white p-3 xl:p-4">
                   <p className="text-xs font-bold uppercase tracking-wide text-[#796c63]">
                     Customer
                   </p>
@@ -535,7 +593,7 @@ export default function PosPage() {
                     </button>
                   </div>
                 </div>
-                <div className="rounded-xl border border-[#eadfd3] bg-white p-4">
+                <div className="rounded-xl border border-[#eadfd3] bg-white p-3 xl:p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
                       <p className="font-black">Ringkasan pesanan</p>
@@ -575,44 +633,53 @@ export default function PosPage() {
                 </div>
               </div>
 
-              <div className="sticky bottom-0 z-10 shrink-0 space-y-4 border-t border-[#eadfd3] bg-[#fffdfa]/98 p-5 shadow-[0_-14px_30px_rgba(75,47,31,0.08)] backdrop-blur-xl">
-                <label>
-                  <span className="label">DISKON NOMINAL</span>
-                  <input
-                    className="field"
-                    type="number"
-                    min={0}
-                    max={subtotal}
-                    value={discount}
-                    onChange={(e) =>
-                      setDiscount(
-                        Math.min(subtotal, Math.max(0, Number(e.target.value))),
-                      )
-                    }
-                  />
-                </label>
-                <div>
-                  <span className="label">METODE PEMBAYARAN</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(["CASH", "QRIS", "TRANSFER"] as const).map((method) => (
-                      <button
-                        type="button"
-                        key={method}
-                        onClick={() => setPayment(method)}
-                        className={
-                          payment === method ? "btn-primary" : "btn-ghost"
-                        }
-                      >
-                        {method}
-                      </button>
-                    ))}
+              <div className="sticky bottom-0 z-10 shrink-0 space-y-2 border-t border-[#eadfd3] bg-[#fffdfa]/98 p-3 shadow-[0_-14px_30px_rgba(75,47,31,0.08)] backdrop-blur-xl xl:space-y-4 xl:p-5">
+                <div className="grid grid-cols-[minmax(110px,0.8fr)_minmax(0,2fr)] items-end gap-2">
+                  <label>
+                    <span className="label">DISKON NOMINAL</span>
+                    <input
+                      className="field !min-h-9 !py-1.5 text-sm"
+                      type="number"
+                      min={0}
+                      max={subtotal}
+                      value={discount}
+                      onChange={(e) =>
+                        setDiscount(
+                          Math.min(
+                            subtotal,
+                            Math.max(0, Number(e.target.value)),
+                          ),
+                        )
+                      }
+                    />
+                  </label>
+                  <div>
+                    <span className="label">METODE PEMBAYARAN</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["CASH", "QRIS", "TRANSFER"] as const).map(
+                        (method) => (
+                          <button
+                            type="button"
+                            key={method}
+                            onClick={() => setPayment(method)}
+                            className={
+                              payment === method
+                                ? "btn-primary !px-2 !py-1.5 text-xs"
+                                : "btn-ghost !px-2 !py-1.5 text-xs"
+                            }
+                          >
+                            {method}
+                          </button>
+                        ),
+                      )}
+                    </div>
                   </div>
                 </div>
                 {payment === "CASH" && (
                   <label>
                     <span className="label">UANG DITERIMA</span>
                     <input
-                      className="field"
+                      className="field !min-h-9 !py-1.5 text-sm"
                       type="number"
                       min={total}
                       value={received || ""}
@@ -621,7 +688,7 @@ export default function PosPage() {
                     />
                   </label>
                 )}
-                <div className="space-y-2 rounded-xl bg-[#fff1e9] p-4 text-sm">
+                <div className="space-y-1 rounded-xl bg-[#fff1e9] p-3 text-xs xl:space-y-2 xl:p-4 xl:text-sm">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <b>{rupiah(subtotal)}</b>
@@ -636,7 +703,7 @@ export default function PosPage() {
                       <b>{rupiah(tax)}</b>
                     </div>
                   )}
-                  <div className="flex justify-between border-t border-dashed border-[#d8c8ba] pt-3 text-xl">
+                  <div className="flex justify-between border-t border-dashed border-[#d8c8ba] pt-2 text-base xl:pt-3 xl:text-xl">
                     <span className="font-black">Total</span>
                     <b className="text-[#e7562c]">{rupiah(total)}</b>
                   </div>
@@ -651,14 +718,14 @@ export default function PosPage() {
                 <div className="grid grid-cols-[auto_1fr] gap-3">
                   <button
                     type="button"
-                    className="btn-ghost"
+                    className="btn-ghost !px-3 !py-2 text-xs"
                     onClick={() => setCheckoutStep(2)}
                   >
                     Kembali
                   </button>
                   <button
                     type="button"
-                    className="btn-primary"
+                    className="btn-primary !px-3 !py-2 text-xs"
                     disabled={
                       !cart.length ||
                       !customerName.trim() ||
@@ -675,6 +742,7 @@ export default function PosPage() {
               </div>
             </div>
           )}
+          </div>
         </aside>
       </div>
       {result && (
