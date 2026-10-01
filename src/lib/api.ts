@@ -1,6 +1,8 @@
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 let accessToken: string | null = null;
+let refreshRequest: Promise<AuthSession> | null = null;
+type AuthSession = { accessToken: string; expiresIn: number };
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -14,7 +16,7 @@ export class ApiError extends Error {
 export function setAccessToken(token: string | null) {
   accessToken = token;
 }
-export async function refreshAccessToken() {
+async function requestAccessToken() {
   const response = await fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
     credentials: "include",
@@ -24,8 +26,17 @@ export async function refreshAccessToken() {
     throw new ApiError("Sesi berakhir", response.status);
   }
   const body = await response.json();
-  accessToken = body.data.accessToken as string;
-  return accessToken;
+  const session = body.data as AuthSession;
+  accessToken = session.accessToken;
+  return session;
+}
+export function refreshAccessToken() {
+  if (!refreshRequest) {
+    refreshRequest = requestAccessToken().finally(() => {
+      refreshRequest = null;
+    });
+  }
+  return refreshRequest;
 }
 export async function api<T = unknown>(
   path: string,
