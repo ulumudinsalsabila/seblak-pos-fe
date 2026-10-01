@@ -9,12 +9,13 @@ import {
   Search,
   ShoppingCart,
   Trash2,
+  UtensilsCrossed,
   X,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { rupiah } from "@/lib/format";
 import type { Category, Product, Settings, Transaction } from "@/lib/types";
-import { ErrorNotice, Loading, PageHeader } from "@/components/ui";
+import { ErrorNotice, Loading } from "@/components/ui";
 
 type CartLine = { product: Product; quantity: number };
 const choiceClass = (active: boolean) =>
@@ -155,32 +156,28 @@ export default function PosPage() {
     return <Loading />;
   return (
     <>
-      <PageHeader
-        title="Kasir"
-        description="Pilih menu, atur pesanan, lalu bayar."
-      />
-      <div className="grid gap-5 xl:grid-cols-[1fr_420px]">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_440px] 2xl:grid-cols-[minmax(0,1fr)_500px]">
         <section>
-          <div className="card mb-4 p-3">
+          <div className="card mb-5 p-4">
             <div className="relative">
               <Search
-                className="absolute left-3 top-3 text-[#a39286]"
-                size={19}
+                className="absolute left-4 top-3.5 text-[#6f6259]"
+                size={22}
               />
               <input
-                className="field pl-10"
-                placeholder="Cari nama atau SKU..."
+                className="field min-h-13 pl-12 text-base"
+                placeholder="Cari menu atau SKU..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
               <button
                 onClick={() => setCategory("all")}
                 className={
                   category === "all"
-                    ? "btn-primary whitespace-nowrap"
-                    : "btn-ghost whitespace-nowrap"
+                    ? "btn-primary min-w-28 whitespace-nowrap"
+                    : "btn-ghost min-w-28 whitespace-nowrap bg-[#f5f0eb]"
                 }
               >
                 Semua
@@ -191,8 +188,8 @@ export default function PosPage() {
                   onClick={() => setCategory(item.id)}
                   className={
                     category === item.id
-                      ? "btn-primary whitespace-nowrap"
-                      : "btn-ghost whitespace-nowrap"
+                      ? "btn-primary min-w-28 whitespace-nowrap"
+                      : "btn-ghost min-w-28 whitespace-nowrap bg-[#f5f0eb]"
                   }
                 >
                   {item.name}
@@ -200,31 +197,45 @@ export default function PosPage() {
               ))}
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {filtered.map((product) => (
               <button
                 key={product.id}
                 onClick={() => add(product)}
                 disabled={product.trackStock && (product.stock ?? 0) < 1}
-                className="card group min-h-36 p-4 text-left transition hover:-translate-y-1 hover:border-[#f1a080] hover:shadow-lg"
+                className="card group overflow-hidden p-3 text-left transition hover:-translate-y-1 hover:border-[#f1a080] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <div className="flex justify-between gap-3">
-                  <span className="badge bg-[#fff0e8] text-[#bd3519]">
-                    {product.category.name}
-                  </span>
+                <div
+                  className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-[#fff0e8] to-[#f7d7bd] bg-cover bg-center"
+                  style={
+                    product.imageUrl
+                      ? { backgroundImage: `url(${JSON.stringify(product.imageUrl)})` }
+                      : undefined
+                  }
+                >
+                  {!product.imageUrl && (
+                    <UtensilsCrossed size={42} className="text-[#e7562c]/45" />
+                  )}
                   {product.trackStock && (
-                    <span className="text-xs font-bold text-[#796c63]">
+                    <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-xs font-bold text-[#796c63] shadow-sm">
                       Stok {product.stock}
                     </span>
                   )}
                 </div>
-                <h3 className="mt-5 text-lg font-black group-hover:text-[#e7562c]">
+                <p className="mt-3 text-xs font-bold text-[#9b8a7d]">
+                  {product.category.name}
+                </p>
+                <h3 className="mt-1 line-clamp-2 min-h-12 text-base font-black group-hover:text-[#e7562c]">
                   {product.name}
                 </h3>
-                <p className="mt-1 text-xs text-[#9b8a7d]">{product.sku}</p>
-                <p className="mt-3 font-black text-[#477a52]">
-                  {rupiah(product.price)}
-                </p>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <p className="font-black text-[#e7562c]">
+                    {rupiah(product.price)}
+                  </p>
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#f04e2a] text-white shadow-sm transition group-hover:scale-105">
+                    <Plus size={22} />
+                  </span>
+                </div>
               </button>
             ))}
           </div>
@@ -234,19 +245,28 @@ export default function PosPage() {
             </p>
           )}
         </section>
-        <aside className="card h-fit overflow-hidden xl:sticky xl:top-8">
+        <aside className="card h-fit overflow-hidden xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
           <div className="flex items-center gap-3 border-b border-[#eadfd3] p-5">
-            <span className="rounded-xl bg-[#2b1c15] p-2 text-white">
-              <ShoppingCart size={20} />
-            </span>
-            <div>
-              <h2 className="font-black">Pesanan</h2>
-              <p className="text-xs text-[#796c63]">
-                {cart.reduce((s, l) => s + l.quantity, 0)} item
-              </p>
+            <ShoppingCart size={28} />
+            <div className="flex-1">
+              <h2 className="text-xl font-black">
+                Pesanan{" "}
+                <span className="text-[#e7562c]">
+                  ({cart.reduce((s, l) => s + l.quantity, 0)})
+                </span>
+              </h2>
             </div>
+            <button
+              aria-label="Kosongkan pesanan"
+              title="Kosongkan pesanan"
+              disabled={!cart.length}
+              onClick={() => setCart([])}
+              className="rounded-xl bg-red-50 p-2.5 text-red-500 disabled:opacity-30"
+            >
+              <Trash2 size={20} />
+            </button>
           </div>
-          <div className="max-h-[38vh] space-y-3 overflow-y-auto p-4">
+          <div className="max-h-[28vh] min-h-36 space-y-3 overflow-y-auto p-4">
             {cart.map((line) => (
               <div
                 key={line.product.id}
@@ -291,13 +311,13 @@ export default function PosPage() {
               </div>
             ))}
             {!cart.length && (
-              <div className="py-10 text-center text-sm text-[#9b8a7d]">
+              <div className="py-8 text-center text-sm text-[#9b8a7d]">
                 <ShoppingCart className="mx-auto mb-3 opacity-30" />
                 Keranjang masih kosong
               </div>
             )}
           </div>
-          <div className="space-y-4 border-t border-[#eadfd3] bg-[#fffdfa] p-5">
+          <div className="space-y-5 border-t border-[#eadfd3] bg-[#fffdfa] p-5">
             <label>
               <span className="label">NAMA CUSTOMER</span>
               <input
@@ -308,71 +328,76 @@ export default function PosPage() {
                 placeholder="Masukkan nama customer"
               />
             </label>
-            <div>
-              <span className="label">JENIS PESANAN</span>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setOrderType("DINE_IN")}
-                  className={choiceClass(orderType === "DINE_IN")}
-                >
-                  Makan di tempat
-                </button>
-                <button
-                  onClick={() => setOrderType("TAKEAWAY")}
-                  className={choiceClass(orderType === "TAKEAWAY")}
-                >
-                  Bungkus
-                </button>
-              </div>
-            </div>
-            <div>
-              <span className="label">LEVEL PEDAS</span>
-              <div className="grid grid-cols-6 gap-1">
-                {[0, 1, 2, 3, 4, 5].map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => setSpicy(level)}
-                    className={`rounded-lg py-2 text-sm font-black ${spicy === level ? "bg-[#e7562c] text-white" : "bg-white ring-1 ring-[#eadfd3]"}`}
-                  >
-                    {level}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <span className="label">KUAH</span>
-              <div className="grid grid-cols-3 gap-2">
-                {([
-                  ["LITTLE", "Sedikit"],
-                  ["MEDIUM", "Sedang"],
-                  ["MUCH", "Banyak"],
-                ] as const).map(([value, label]) => (
-                  <button
-                    key={value}
-                    onClick={() => setBrothLevel(value)}
-                    className={choiceClass(brothLevel === value)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <span className="label">RASA</span>
-              <div className="grid grid-cols-3 gap-2">
-                {([
-                  ["SALTY", "Asin"],
-                  ["SAVORY", "Gurih"],
-                  ["SWEET", "Manis"],
-                ] as const).map(([value, label]) => (
-                  <button
-                    key={value}
-                    onClick={() => setTastePreference(value)}
-                    className={choiceClass(tastePreference === value)}
-                  >
-                    {label}
-                  </button>
-                ))}
+            <div className="rounded-xl bg-[#fff1e9] p-4">
+              <p className="mb-4 font-black">Pilihan pesanan</p>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <span className="label">TEMPAT</span>
+                  <div className="grid gap-2">
+                    <button
+                      onClick={() => setOrderType("DINE_IN")}
+                      className={choiceClass(orderType === "DINE_IN")}
+                    >
+                      Makan di tempat
+                    </button>
+                    <button
+                      onClick={() => setOrderType("TAKEAWAY")}
+                      className={choiceClass(orderType === "TAKEAWAY")}
+                    >
+                      Bungkus
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <span className="label">RASA</span>
+                  <div className="grid gap-2">
+                    {([
+                      ["SALTY", "Asin"],
+                      ["SAVORY", "Gurih"],
+                      ["SWEET", "Manis"],
+                    ] as const).map(([value, label]) => (
+                      <button
+                        key={value}
+                        onClick={() => setTastePreference(value)}
+                        className={choiceClass(tastePreference === value)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="label">LEVEL PEDAS</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[0, 1, 2, 3, 4, 5].map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => setSpicy(level)}
+                        className={choiceClass(spicy === level)}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="label">KUAH</span>
+                  <div className="grid gap-2">
+                    {([
+                      ["LITTLE", "Sedikit"],
+                      ["MEDIUM", "Sedang"],
+                      ["MUCH", "Banyak"],
+                    ] as const).map(([value, label]) => (
+                      <button
+                        key={value}
+                        onClick={() => setBrothLevel(value)}
+                        className={choiceClass(brothLevel === value)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
             <label>
@@ -382,7 +407,7 @@ export default function PosPage() {
                 value={notes}
                 maxLength={500}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Contoh: kuah sedikit"
+                placeholder="Contoh: tanpa topping, dll"
               />
             </label>
             <label>
