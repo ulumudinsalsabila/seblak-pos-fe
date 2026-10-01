@@ -1,6 +1,13 @@
 "use client";
+
 import { FormEvent, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, Plus, Search, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { rupiah } from "@/lib/format";
 import type { Category, Product } from "@/lib/types";
@@ -11,25 +18,59 @@ import {
   PageHeader,
   StatusBadge,
 } from "@/components/ui";
+
+type ProductListResponse = {
+  data: Product[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
+const initialForm = {
+  categoryId: "",
+  name: "",
+  sku: "",
+  pricingType: "FIXED",
+  price: 15000,
+  trackStock: false,
+  stock: 0,
+};
+
 export default function ProductsPage() {
   const client = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [filters, setFilters] = useState({
+    search: "",
+    categoryId: "",
+    status: "",
+    page: 1,
+    limit: 10,
+  });
+  const [form, setForm] = useState({ ...initialForm });
+
   const products = useQuery({
-    queryKey: ["products"],
-    queryFn: () => api<{ data: Product[] }>("/products"),
+    queryKey: ["products", "admin", filters],
+    queryFn: () => {
+      const params = new URLSearchParams({
+        page: String(filters.page),
+        limit: String(filters.limit),
+      });
+      if (filters.search) params.set("search", filters.search);
+      if (filters.categoryId) params.set("categoryId", filters.categoryId);
+      if (filters.status) params.set("status", filters.status);
+      return api<ProductListResponse>(`/products?${params}`);
+    },
+    placeholderData: keepPreviousData,
   });
   const categories = useQuery({
     queryKey: ["categories"],
     queryFn: () => api<{ data: Category[] }>("/categories"),
   });
-  const [form, setForm] = useState({
-    categoryId: "",
-    name: "",
-    sku: "",
-    pricingType: "FIXED",
-    price: 15000,
-    trackStock: false,
-    stock: 0,
-  });
+
   const create = useMutation({
     mutationFn: () =>
       api("/products", {
@@ -40,7 +81,9 @@ export default function ProductsPage() {
         }),
       }),
     onSuccess: () => {
-      setForm((v) => ({ ...v, name: "", sku: "" }));
+      setForm({ ...initialForm });
+      setDialogOpen(false);
+      setFilters((value) => ({ ...value, page: 1 }));
       void client.invalidateQueries({ queryKey: ["products"] });
     },
   });
@@ -50,118 +93,126 @@ export default function ProductsPage() {
         method: "PATCH",
         body: JSON.stringify({ isActive: !item.isActive }),
       }),
-    onSuccess: () => void client.invalidateQueries({ queryKey: ["products"] }),
+    onSuccess: () => {
+      setFilters((value) => ({ ...value, page: 1 }));
+      void client.invalidateQueries({ queryKey: ["products"] });
+    },
   });
-  function submit(e: FormEvent) {
-    e.preventDefault();
+
+  function submitProduct(event: FormEvent) {
+    event.preventDefault();
     create.mutate();
   }
+
+  function submitSearch(event: FormEvent) {
+    event.preventDefault();
+    setFilters((value) => ({
+      ...value,
+      search: searchInput.trim(),
+      page: 1,
+    }));
+  }
+
+  function closeDialog() {
+    if (create.isPending) return;
+    setDialogOpen(false);
+    create.reset();
+  }
+
   if (products.isLoading || categories.isLoading) return <Loading />;
+  if (categories.error) return <ErrorNotice error={categories.error} />;
+
+  const items = products.data?.data ?? [];
+  const meta = products.data?.meta;
+
   return (
     <>
       <PageHeader
         title="Produk"
         description="Harga dan stok resmi yang dipakai backend saat checkout."
+        action={
+          <button
+            type="button"
+            className="btn-primary flex items-center gap-2"
+            onClick={() => {
+              create.reset();
+              setDialogOpen(true);
+            }}
+          >
+            <Plus size={18} />
+            Tambah produk
+          </button>
+        }
       />
-      <div className="grid gap-6 2xl:grid-cols-[410px_1fr]">
-        <form onSubmit={submit} className="card h-fit space-y-4 p-5">
-          <h2 className="font-black">Produk baru</h2>
-          <label>
-            <span className="label">KATEGORI</span>
-            <select
-              className="field"
-              required
-              value={form.categoryId}
-              onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-            >
-              <option value="">Pilih kategori</option>
-              {categories.data?.data
-                .filter((c) => c.isActive)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label>
-              <span className="label">NAMA</span>
-              <input
-                className="field"
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </label>
-            <label>
-              <span className="label">SKU</span>
-              <input
-                className="field"
-                required
-                value={form.sku}
-                onChange={(e) => setForm({ ...form, sku: e.target.value })}
-              />
-            </label>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <label>
-              <span className="label">TIPE</span>
-              <select
-                className="field"
-                value={form.pricingType}
-                onChange={(e) =>
-                  setForm({ ...form, pricingType: e.target.value })
-                }
-              >
-                <option>FIXED</option>
-                <option>PER_ITEM</option>
-              </select>
-            </label>
-            <label>
-              <span className="label">HARGA</span>
-              <input
-                className="field"
-                type="number"
-                min={0}
-                value={form.price}
-                onChange={(e) =>
-                  setForm({ ...form, price: Number(e.target.value) })
-                }
-              />
-            </label>
-          </div>
-          <label className="flex items-center gap-2 text-sm font-bold">
-            <input
-              type="checkbox"
-              checked={form.trackStock}
-              onChange={(e) =>
-                setForm({ ...form, trackStock: e.target.checked })
-              }
+
+      <section className="card mb-5 p-4">
+        <form
+          onSubmit={submitSearch}
+          className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_240px_180px_auto]"
+        >
+          <div className="relative">
+            <Search
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#796c63]"
             />
-            Track stock
-          </label>
-          {form.trackStock && (
-            <label>
-              <span className="label">STOK AWAL</span>
-              <input
-                className="field"
-                type="number"
-                min={0}
-                value={form.stock}
-                onChange={(e) =>
-                  setForm({ ...form, stock: Number(e.target.value) })
-                }
-              />
-            </label>
-          )}
-          {create.error && <ErrorNotice error={create.error} />}
-          <button className="btn-primary w-full" disabled={create.isPending}>
-            Simpan produk
+            <input
+              className="field field-with-icon"
+              placeholder="Cari nama atau SKU..."
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+            />
+          </div>
+          <select
+            className="field"
+            value={filters.categoryId}
+            onChange={(event) =>
+              setFilters((value) => ({
+                ...value,
+                categoryId: event.target.value,
+                page: 1,
+              }))
+            }
+          >
+            <option value="">Semua kategori</option>
+            {categories.data?.data.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="field"
+            value={filters.status}
+            onChange={(event) =>
+              setFilters((value) => ({
+                ...value,
+                status: event.target.value,
+                page: 1,
+              }))
+            }
+          >
+            <option value="">Semua status</option>
+            <option value="ACTIVE">Aktif</option>
+            <option value="INACTIVE">Nonaktif</option>
+          </select>
+          <button className="btn-primary" type="submit">
+            Cari
           </button>
         </form>
-        <section className="card overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
+      </section>
+
+      {products.error && <ErrorNotice error={products.error} />}
+      <section className="card overflow-hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-[#eadfd3] px-4 py-3 text-sm text-[#796c63]">
+          <span>
+            {meta ? `${meta.total} produk ditemukan` : "Daftar produk"}
+          </span>
+          {products.isFetching && (
+            <span className="font-semibold text-[#e7562c]">Memuat...</span>
+          )}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-[#fff8f1] text-xs text-[#796c63]">
               <tr>
                 <th className="p-4">PRODUK</th>
@@ -173,8 +224,11 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {products.data?.data.map((item) => (
-                <tr key={item.id} className="border-t border-[#f1e8df]">
+              {items.map((item) => (
+                <tr
+                  key={item.id}
+                  className="border-t border-[#f1e8df] hover:bg-orange-50/40"
+                >
                   <td className="p-4">
                     <b>{item.name}</b>
                     <p className="text-xs text-[#796c63]">{item.sku}</p>
@@ -189,7 +243,11 @@ export default function ProductsPage() {
                   </td>
                   <td className="p-4 text-right">
                     <button
+                      type="button"
                       className="btn-ghost"
+                      disabled={
+                        toggle.isPending && toggle.variables?.id === item.id
+                      }
                       onClick={() => toggle.mutate(item)}
                     >
                       {item.isActive ? "Nonaktifkan" : "Aktifkan"}
@@ -199,9 +257,207 @@ export default function ProductsPage() {
               ))}
             </tbody>
           </table>
-          {!products.data?.data.length && <Empty>Belum ada produk.</Empty>}
-        </section>
-      </div>
+        </div>
+        {!items.length && !products.error && (
+          <Empty>Tidak ada produk sesuai filter.</Empty>
+        )}
+        {meta && meta.totalPages > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#eadfd3] bg-[#fffdfa] px-4 py-3">
+            <p className="text-sm text-[#796c63]">
+              Halaman <b className="text-[#241c17]">{meta.page}</b> dari{" "}
+              <b className="text-[#241c17]">{meta.totalPages}</b>
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn-ghost flex items-center gap-1"
+                disabled={filters.page <= 1 || products.isFetching}
+                onClick={() =>
+                  setFilters((value) => ({
+                    ...value,
+                    page: Math.max(1, value.page - 1),
+                  }))
+                }
+              >
+                <ChevronLeft size={17} />
+                Sebelumnya
+              </button>
+              <button
+                type="button"
+                className="btn-ghost flex items-center gap-1"
+                disabled={
+                  filters.page >= meta.totalPages || products.isFetching
+                }
+                onClick={() =>
+                  setFilters((value) => ({
+                    ...value,
+                    page: Math.min(meta.totalPages, value.page + 1),
+                  }))
+                }
+              >
+                Berikutnya
+                <ChevronRight size={17} />
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {dialogOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center p-4">
+          <button
+            type="button"
+            aria-label="Tutup dialog produk"
+            className="absolute inset-0 bg-black/55 backdrop-blur-sm"
+            onClick={closeDialog}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="product-dialog-title"
+            className="card relative z-10 max-h-[calc(100vh-2rem)] w-full max-w-xl overflow-y-auto p-5 sm:p-6"
+          >
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h2 id="product-dialog-title" className="text-xl font-black">
+                  Produk baru
+                </h2>
+                <p className="mt-1 text-sm text-[#796c63]">
+                  Tambahkan produk ke katalog Saung Sunja.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Tutup"
+                className="rounded-xl border border-[#eadfd3] p-2 text-[#796c63]"
+                onClick={closeDialog}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={submitProduct} className="space-y-4">
+              <label>
+                <span className="label">KATEGORI</span>
+                <select
+                  autoFocus
+                  className="field"
+                  required
+                  value={form.categoryId}
+                  onChange={(event) =>
+                    setForm({ ...form, categoryId: event.target.value })
+                  }
+                >
+                  <option value="">Pilih kategori</option>
+                  {categories.data?.data
+                    .filter((category) => category.isActive)
+                    .map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label>
+                  <span className="label">NAMA</span>
+                  <input
+                    className="field"
+                    required
+                    maxLength={100}
+                    value={form.name}
+                    onChange={(event) =>
+                      setForm({ ...form, name: event.target.value })
+                    }
+                  />
+                </label>
+                <label>
+                  <span className="label">SKU</span>
+                  <input
+                    className="field uppercase"
+                    required
+                    maxLength={50}
+                    value={form.sku}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        sku: event.target.value.toUpperCase(),
+                      })
+                    }
+                  />
+                </label>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label>
+                  <span className="label">TIPE HARGA</span>
+                  <select
+                    className="field"
+                    value={form.pricingType}
+                    onChange={(event) =>
+                      setForm({ ...form, pricingType: event.target.value })
+                    }
+                  >
+                    <option value="FIXED">Harga tetap</option>
+                    <option value="PER_ITEM">Per item</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="label">HARGA</span>
+                  <input
+                    className="field"
+                    type="number"
+                    required
+                    min={0}
+                    value={form.price}
+                    onChange={(event) =>
+                      setForm({ ...form, price: Number(event.target.value) })
+                    }
+                  />
+                </label>
+              </div>
+              <label className="flex items-center gap-3 rounded-xl border border-[#eadfd3] bg-[#fff8f1] p-4 text-sm font-bold">
+                <input
+                  type="checkbox"
+                  checked={form.trackStock}
+                  onChange={(event) =>
+                    setForm({ ...form, trackStock: event.target.checked })
+                  }
+                />
+                Pantau stok produk
+              </label>
+              {form.trackStock && (
+                <label>
+                  <span className="label">STOK AWAL</span>
+                  <input
+                    className="field"
+                    type="number"
+                    required
+                    min={0}
+                    value={form.stock}
+                    onChange={(event) =>
+                      setForm({ ...form, stock: Number(event.target.value) })
+                    }
+                  />
+                </label>
+              )}
+              {create.error && <ErrorNotice error={create.error} />}
+              <div className="grid grid-cols-2 gap-3 border-t border-[#eadfd3] pt-4">
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  disabled={create.isPending}
+                  onClick={closeDialog}
+                >
+                  Batal
+                </button>
+                <button className="btn-primary" disabled={create.isPending}>
+                  {create.isPending ? "Menyimpan..." : "Simpan produk"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }
