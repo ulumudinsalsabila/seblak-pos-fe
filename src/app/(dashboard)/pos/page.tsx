@@ -165,7 +165,7 @@ export default function PosPage() {
                 size={22}
               />
               <input
-                className="field min-h-13 pl-12 text-base"
+                className="field field-with-icon min-h-13 text-base"
                 placeholder="Cari menu atau SKU..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

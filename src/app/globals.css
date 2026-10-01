@@ -61,6 +61,9 @@ button {
   border-color: var(--brand);
   box-shadow: 0 0 0 3px rgba(231, 86, 44, 0.12);
 }
+.field.field-with-icon {
+  padding-left: 3rem;
+}
 textarea.field {
   min-height: 6rem;
   resize: vertical;
