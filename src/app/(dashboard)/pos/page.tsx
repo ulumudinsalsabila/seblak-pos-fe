@@ -20,6 +20,13 @@ import { ErrorNotice, Loading } from "@/components/ui";
 type CartLine = { product: Product; quantity: number };
 const choiceClass = (active: boolean) =>
   active ? "btn-primary py-2.5" : "btn-ghost py-2.5";
+const categoryClass = (active: boolean) =>
+  [
+    "shrink-0 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-extrabold transition",
+    active
+      ? "bg-[#e7562c] text-white shadow-sm hover:bg-[#bd3519]"
+      : "border border-[#eadfd3] bg-white text-[#493a31] hover:border-[#f1a080] hover:bg-[#fff3ec] hover:text-[#d94722]",
+  ].join(" ");
 
 export default function PosPage() {
   const client = useQueryClient();
@@ -157,40 +164,38 @@ export default function PosPage() {
   return (
     <>
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_440px] 2xl:grid-cols-[minmax(0,1fr)_500px]">
-        <section>
-          <div className="card mb-5 p-4">
+        <section className="min-w-0">
+          <div className="card sticky top-20 z-10 mb-5 bg-[#fffdfa]/95 p-3 shadow-[0_14px_35px_rgba(75,47,31,0.12)] backdrop-blur-xl sm:p-4">
             <div className="relative">
-              <Search
-                className="absolute left-4 top-3.5 text-[#6f6259]"
-                size={22}
-              />
+              <span className="pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center text-[#6f6259]">
+                <Search size={20} />
+              </span>
               <input
-                className="field field-with-icon min-h-13 text-base"
+                className="field field-with-icon min-h-12 bg-white/95 text-sm sm:text-base"
                 placeholder="Cari menu atau SKU..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+            <div
+              className="mt-3 flex max-w-full snap-x gap-2 overflow-x-auto pb-1 [scrollbar-color:#e7b39f_transparent] [scrollbar-width:thin]"
+              aria-label="Filter kategori produk"
+            >
               <button
+                type="button"
+                aria-pressed={category === "all"}
                 onClick={() => setCategory("all")}
-                className={
-                  category === "all"
-                    ? "btn-primary min-w-28 whitespace-nowrap"
-                    : "btn-ghost min-w-28 whitespace-nowrap bg-[#f5f0eb]"
-                }
+                className={`${categoryClass(category === "all")} snap-start`}
               >
                 Semua
               </button>
               {categories.data?.data.map((item) => (
                 <button
+                  type="button"
                   key={item.id}
+                  aria-pressed={category === item.id}
                   onClick={() => setCategory(item.id)}
-                  className={
-                    category === item.id
-                      ? "btn-primary min-w-28 whitespace-nowrap"
-                      : "btn-ghost min-w-28 whitespace-nowrap bg-[#f5f0eb]"
-                  }
+                  className={`${categoryClass(category === item.id)} snap-start`}
                 >
                   {item.name}
                 </button>
