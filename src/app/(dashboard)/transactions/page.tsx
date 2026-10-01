@@ -256,24 +256,22 @@ export default function TransactionsPage() {
           <option value="QRIS">QRIS</option>
           <option value="TRANSFER">TRANSFER</option>
         </select>
-        <label>
-          <span className="label">DARI TANGGAL</span>
-          <input
-            className="field"
-            type="date"
-            value={filters.dateFrom}
-            onChange={(event) => updateFilter("dateFrom", event.target.value)}
-          />
-        </label>
-        <label>
-          <span className="label">SAMPAI TANGGAL</span>
-          <input
-            className="field"
-            type="date"
-            value={filters.dateTo}
-            onChange={(event) => updateFilter("dateTo", event.target.value)}
-          />
-        </label>
+        <input
+          aria-label="Dari tanggal"
+          title="Dari tanggal"
+          className="field"
+          type="date"
+          value={filters.dateFrom}
+          onChange={(event) => updateFilter("dateFrom", event.target.value)}
+        />
+        <input
+          aria-label="Sampai tanggal"
+          title="Sampai tanggal"
+          className="field"
+          type="date"
+          value={filters.dateTo}
+          onChange={(event) => updateFilter("dateTo", event.target.value)}
+        />
       </div>
 
       {exportError && <ErrorNotice error={exportError} />}
