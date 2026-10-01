@@ -47,7 +47,9 @@ button {
   box-shadow: 0 12px 30px rgba(75, 47, 31, 0.055);
 }
 .field {
+  display: block;
   width: 100%;
+  min-height: 3rem;
   border: 1px solid var(--line);
   border-radius: 0.8rem;
   background: white;
@@ -59,12 +61,25 @@ button {
   border-color: var(--brand);
   box-shadow: 0 0 0 3px rgba(231, 86, 44, 0.12);
 }
+textarea.field {
+  min-height: 6rem;
+  resize: vertical;
+}
+label:has(> .field) {
+  display: grid;
+  min-width: 0;
+  gap: 0.5rem;
+}
+label:has(> .field) > .label {
+  margin-bottom: 0;
+}
 .label {
   display: block;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
   margin-bottom: 0.38rem;
+  line-height: 1.2;
   letter-spacing: 0.02em;
 }
 .btn-primary {
