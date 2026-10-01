@@ -45,10 +45,9 @@ export default function PosPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3>(1);
   const [customerName, setCustomerName] = useState("");
-  const [orderType, setOrderType] = useState<"DINE_IN" | "TAKEAWAY">(
-    "DINE_IN",
-  );
+  const [orderType, setOrderType] = useState<"DINE_IN" | "TAKEAWAY">("DINE_IN");
   const [spicy, setSpicy] = useState(0);
   const [brothLevel, setBrothLevel] = useState<"LITTLE" | "MEDIUM" | "MUCH">(
     "MEDIUM",
@@ -89,18 +88,16 @@ export default function PosPage() {
   );
   const taxableTotal = Math.max(0, subtotal - discount);
   const tax = settings.data?.data.taxEnabled
-    ? Math.round(taxableTotal * Number(settings.data.data.taxPercentage) / 100)
+    ? Math.round(
+        (taxableTotal * Number(settings.data.data.taxPercentage)) / 100,
+      )
     : 0;
   const total = taxableTotal + tax;
   function add(product: Product) {
     if (product.trackStock && (product.stock ?? 0) < 1) return;
     setCart((lines) => {
       const found = lines.find((l) => l.product.id === product.id);
-      if (
-        found &&
-        product.trackStock &&
-        found.quantity >= (product.stock ?? 0)
-      )
+      if (found && product.trackStock && found.quantity >= (product.stock ?? 0))
         return lines;
       return found
         ? lines.map((l) =>
@@ -147,6 +144,7 @@ export default function PosPage() {
   }
   function reset() {
     setCart([]);
+    setCheckoutStep(1);
     setCustomerName("");
     setOrderType("DINE_IN");
     setSpicy(0);
@@ -214,7 +212,9 @@ export default function PosPage() {
                   className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-[#fff0e8] to-[#f7d7bd] bg-cover bg-center"
                   style={
                     product.imageUrl
-                      ? { backgroundImage: `url(${JSON.stringify(product.imageUrl)})` }
+                      ? {
+                          backgroundImage: `url(${JSON.stringify(product.imageUrl)})`,
+                        }
                       : undefined
                   }
                 >
@@ -265,228 +265,373 @@ export default function PosPage() {
               aria-label="Kosongkan pesanan"
               title="Kosongkan pesanan"
               disabled={!cart.length}
-              onClick={() => setCart([])}
+              onClick={() => {
+                setCart([]);
+                setCheckoutStep(1);
+              }}
               className="rounded-xl bg-red-50 p-2.5 text-red-500 disabled:opacity-30"
             >
               <Trash2 size={20} />
             </button>
           </div>
-          <div className="max-h-[28vh] min-h-36 space-y-3 overflow-y-auto p-4">
-            {cart.map((line) => (
-              <div
-                key={line.product.id}
-                className="rounded-xl border border-[#eee3d9] p-3"
-              >
-                <div className="flex justify-between gap-3">
-                  <div>
-                    <p className="font-bold">{line.product.name}</p>
-                    <p className="text-xs text-[#796c63]">
-                      {rupiah(line.product.price)}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() =>
-                      setCart((v) =>
-                        v.filter((x) => x.product.id !== line.product.id),
-                      )
-                    }
-                    className="text-red-500"
+          <div className="grid grid-cols-3 gap-2 border-b border-[#eadfd3] bg-[#fffdfa] px-4 py-3">
+            {(
+              [
+                [1, "Pesanan"],
+                [2, "Detail"],
+                [3, "Bayar"],
+              ] as const
+            ).map(([step, label]) => {
+              const disabled =
+                (step === 2 && !cart.length) ||
+                (step === 3 && (!cart.length || !customerName.trim()));
+              const active = checkoutStep === step;
+              const complete = checkoutStep > step;
+
+              return (
+                <button
+                  type="button"
+                  key={step}
+                  disabled={disabled}
+                  onClick={() => setCheckoutStep(step)}
+                  className={`flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-extrabold transition sm:text-sm ${
+                    active
+                      ? "bg-[#e7562c] text-white shadow-sm"
+                      : complete
+                        ? "bg-[#fff0e8] text-[#d94722]"
+                        : "bg-[#f7f2ed] text-[#8b7b70]"
+                  } disabled:cursor-not-allowed disabled:opacity-45`}
+                >
+                  <span
+                    className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] ${
+                      active ? "bg-white/20" : "bg-white"
+                    }`}
                   >
-                    <Trash2 size={17} />
+                    {step}
+                  </span>
+                  <span className="truncate">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {checkoutStep === 1 && (
+            <div>
+              <div className="max-h-[42vh] min-h-48 space-y-3 overflow-y-auto p-4">
+                {cart.map((line) => (
+                  <div
+                    key={line.product.id}
+                    className="rounded-xl border border-[#eee3d9] p-3"
+                  >
+                    <div className="flex justify-between gap-3">
+                      <div>
+                        <p className="font-bold">{line.product.name}</p>
+                        <p className="text-xs text-[#796c63]">
+                          {rupiah(line.product.price)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={`Hapus ${line.product.name}`}
+                        onClick={() =>
+                          setCart((value) =>
+                            value.filter(
+                              (item) => item.product.id !== line.product.id,
+                            ),
+                          )
+                        }
+                        className="text-red-500"
+                      >
+                        <Trash2 size={17} />
+                      </button>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3 rounded-lg bg-[#fff8f1] p-1">
+                        <button
+                          type="button"
+                          aria-label={`Kurangi ${line.product.name}`}
+                          className="p-1"
+                          onClick={() => qty(line.product.id, -1)}
+                        >
+                          <Minus size={16} />
+                        </button>
+                        <b>{line.quantity}</b>
+                        <button
+                          type="button"
+                          aria-label={`Tambah ${line.product.name}`}
+                          className="p-1"
+                          onClick={() => qty(line.product.id, 1)}
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                      <b>{rupiah(line.product.price * line.quantity)}</b>
+                    </div>
+                  </div>
+                ))}
+                {!cart.length && (
+                  <div className="py-10 text-center text-sm text-[#9b8a7d]">
+                    <ShoppingCart className="mx-auto mb-3 opacity-30" />
+                    Keranjang masih kosong
+                  </div>
+                )}
+              </div>
+              <div className="space-y-4 border-t border-[#eadfd3] bg-[#fffdfa] p-5">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[#796c63]">Subtotal</span>
+                  <b className="text-lg">{rupiah(subtotal)}</b>
+                </div>
+                <button
+                  type="button"
+                  className="btn-primary w-full"
+                  disabled={!cart.length}
+                  onClick={() => setCheckoutStep(2)}
+                >
+                  Lanjut ke detail pesanan
+                </button>
+              </div>
+            </div>
+          )}
+
+          {checkoutStep === 2 && (
+            <div className="space-y-5 bg-[#fffdfa] p-5">
+              <label>
+                <span className="label">NAMA CUSTOMER</span>
+                <input
+                  autoFocus
+                  className="field"
+                  value={customerName}
+                  maxLength={100}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Masukkan nama customer"
+                />
+              </label>
+              <div className="rounded-xl bg-[#fff1e9] p-4">
+                <p className="mb-4 font-black">Pilihan pesanan</p>
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <span className="label">TEMPAT</span>
+                    <div className="grid gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setOrderType("DINE_IN")}
+                        className={choiceClass(orderType === "DINE_IN")}
+                      >
+                        Makan di tempat
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOrderType("TAKEAWAY")}
+                        className={choiceClass(orderType === "TAKEAWAY")}
+                      >
+                        Bungkus
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="label">RASA</span>
+                    <div className="grid gap-2">
+                      {(
+                        [
+                          ["SALTY", "Asin"],
+                          ["SAVORY", "Gurih"],
+                          ["SWEET", "Manis"],
+                        ] as const
+                      ).map(([value, label]) => (
+                        <button
+                          type="button"
+                          key={value}
+                          onClick={() => setTastePreference(value)}
+                          className={choiceClass(tastePreference === value)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="label">LEVEL PEDAS</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[0, 1, 2, 3, 4, 5].map((level) => (
+                        <button
+                          type="button"
+                          key={level}
+                          onClick={() => setSpicy(level)}
+                          className={choiceClass(spicy === level)}
+                        >
+                          {level}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="label">KUAH</span>
+                    <div className="grid gap-2">
+                      {(
+                        [
+                          ["LITTLE", "Sedikit"],
+                          ["MEDIUM", "Sedang"],
+                          ["MUCH", "Banyak"],
+                        ] as const
+                      ).map(([value, label]) => (
+                        <button
+                          type="button"
+                          key={value}
+                          onClick={() => setBrothLevel(value)}
+                          className={choiceClass(brothLevel === value)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <label>
+                <span className="label">CATATAN</span>
+                <input
+                  className="field"
+                  value={notes}
+                  maxLength={500}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Contoh: tanpa topping, dll"
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-3 border-t border-[#eadfd3] pt-4">
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => setCheckoutStep(1)}
+                >
+                  Kembali
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={!customerName.trim()}
+                  onClick={() => setCheckoutStep(3)}
+                >
+                  Ke pembayaran
+                </button>
+              </div>
+            </div>
+          )}
+
+          {checkoutStep === 3 && (
+            <div className="space-y-5 bg-[#fffdfa] p-5">
+              <div className="rounded-xl border border-[#eadfd3] bg-white p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#796c63]">
+                  Customer
+                </p>
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <b className="truncate">{customerName}</b>
+                  <button
+                    type="button"
+                    className="text-sm font-bold text-[#e7562c]"
+                    onClick={() => setCheckoutStep(2)}
+                  >
+                    Ubah
                   </button>
                 </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3 rounded-lg bg-[#fff8f1] p-1">
-                    <button
-                      className="p-1"
-                      onClick={() => qty(line.product.id, -1)}
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <b>{line.quantity}</b>
-                    <button
-                      className="p-1"
-                      onClick={() => qty(line.product.id, 1)}
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                  <b>{rupiah(line.product.price * line.quantity)}</b>
-                </div>
               </div>
-            ))}
-            {!cart.length && (
-              <div className="py-8 text-center text-sm text-[#9b8a7d]">
-                <ShoppingCart className="mx-auto mb-3 opacity-30" />
-                Keranjang masih kosong
-              </div>
-            )}
-          </div>
-          <div className="space-y-5 border-t border-[#eadfd3] bg-[#fffdfa] p-5">
-            <label>
-              <span className="label">NAMA CUSTOMER</span>
-              <input
-                className="field"
-                value={customerName}
-                maxLength={100}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Masukkan nama customer"
-              />
-            </label>
-            <div className="rounded-xl bg-[#fff1e9] p-4">
-              <p className="mb-4 font-black">Pilihan pesanan</p>
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div>
-                  <span className="label">TEMPAT</span>
-                  <div className="grid gap-2">
-                    <button
-                      onClick={() => setOrderType("DINE_IN")}
-                      className={choiceClass(orderType === "DINE_IN")}
-                    >
-                      Makan di tempat
-                    </button>
-                    <button
-                      onClick={() => setOrderType("TAKEAWAY")}
-                      className={choiceClass(orderType === "TAKEAWAY")}
-                    >
-                      Bungkus
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <span className="label">RASA</span>
-                  <div className="grid gap-2">
-                    {([
-                      ["SALTY", "Asin"],
-                      ["SAVORY", "Gurih"],
-                      ["SWEET", "Manis"],
-                    ] as const).map(([value, label]) => (
-                      <button
-                        key={value}
-                        onClick={() => setTastePreference(value)}
-                        className={choiceClass(tastePreference === value)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <span className="label">LEVEL PEDAS</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[0, 1, 2, 3, 4, 5].map((level) => (
-                      <button
-                        key={level}
-                        onClick={() => setSpicy(level)}
-                        className={choiceClass(spicy === level)}
-                      >
-                        {level}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <span className="label">KUAH</span>
-                  <div className="grid gap-2">
-                    {([
-                      ["LITTLE", "Sedikit"],
-                      ["MEDIUM", "Sedang"],
-                      ["MUCH", "Banyak"],
-                    ] as const).map(([value, label]) => (
-                      <button
-                        key={value}
-                        onClick={() => setBrothLevel(value)}
-                        className={choiceClass(brothLevel === value)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <label>
-              <span className="label">CATATAN</span>
-              <input
-                className="field"
-                value={notes}
-                maxLength={500}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Contoh: tanpa topping, dll"
-              />
-            </label>
-            <label>
-              <span className="label">DISKON NOMINAL</span>
-              <input
-                className="field"
-                type="number"
-                min={0}
-                max={subtotal}
-                value={discount}
-                onChange={(e) =>
-                  setDiscount(
-                    Math.min(subtotal, Math.max(0, Number(e.target.value))),
-                  )
-                }
-              />
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["CASH", "QRIS", "TRANSFER"] as const).map((method) => (
-                <button
-                  key={method}
-                  onClick={() => setPayment(method)}
-                  className={payment === method ? "btn-primary" : "btn-ghost"}
-                >
-                  {method}
-                </button>
-              ))}
-            </div>
-            {payment === "CASH" && (
               <label>
-                <span className="label">UANG DITERIMA</span>
+                <span className="label">DISKON NOMINAL</span>
                 <input
                   className="field"
                   type="number"
-                  min={total}
-                  value={received || ""}
-                  onChange={(e) => setReceived(Number(e.target.value))}
+                  min={0}
+                  max={subtotal}
+                  value={discount}
+                  onChange={(e) =>
+                    setDiscount(
+                      Math.min(subtotal, Math.max(0, Number(e.target.value))),
+                    )
+                  }
                 />
               </label>
-            )}
-            <div className="space-y-2 border-t border-dashed border-[#d8c8ba] pt-4 text-sm">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <b>{rupiah(subtotal)}</b>
-              </div>
-              <div className="flex justify-between">
-                <span>Diskon</span>
-                <b>-{rupiah(discount)}</b>
-              </div>
-              {tax > 0 && (
-                <div className="flex justify-between">
-                  <span>Pajak</span>
-                  <b>{rupiah(tax)}</b>
+              <div>
+                <span className="label">METODE PEMBAYARAN</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["CASH", "QRIS", "TRANSFER"] as const).map((method) => (
+                    <button
+                      type="button"
+                      key={method}
+                      onClick={() => setPayment(method)}
+                      className={
+                        payment === method ? "btn-primary" : "btn-ghost"
+                      }
+                    >
+                      {method}
+                    </button>
+                  ))}
                 </div>
+              </div>
+              {payment === "CASH" && (
+                <label>
+                  <span className="label">UANG DITERIMA</span>
+                  <input
+                    className="field"
+                    type="number"
+                    min={total}
+                    value={received || ""}
+                    onChange={(e) => setReceived(Number(e.target.value))}
+                    placeholder={rupiah(total)}
+                  />
+                </label>
               )}
-              <div className="flex justify-between text-xl">
-                <span className="font-black">Total</span>
-                <b className="text-[#e7562c]">{rupiah(total)}</b>
+              <div className="space-y-2 rounded-xl bg-[#fff1e9] p-4 text-sm">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <b>{rupiah(subtotal)}</b>
+                </div>
+                <div className="flex justify-between">
+                  <span>Diskon</span>
+                  <b>-{rupiah(discount)}</b>
+                </div>
+                {tax > 0 && (
+                  <div className="flex justify-between">
+                    <span>Pajak</span>
+                    <b>{rupiah(tax)}</b>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-dashed border-[#d8c8ba] pt-3 text-xl">
+                  <span className="font-black">Total</span>
+                  <b className="text-[#e7562c]">{rupiah(total)}</b>
+                </div>
+                {payment === "CASH" && received >= total && (
+                  <div className="flex justify-between font-bold text-emerald-700">
+                    <span>Kembalian</span>
+                    <span>{rupiah(received - total)}</span>
+                  </div>
+                )}
+              </div>
+              {mutation.error && <ErrorNotice error={mutation.error} />}
+              <div className="grid grid-cols-[auto_1fr] gap-3">
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => setCheckoutStep(2)}
+                >
+                  Kembali
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={
+                    !cart.length ||
+                    !customerName.trim() ||
+                    mutation.isPending ||
+                    (payment === "CASH" && received < total)
+                  }
+                  onClick={checkout}
+                >
+                  {mutation.isPending
+                    ? "Memproses..."
+                    : `Bayar ${rupiah(total)}`}
+                </button>
               </div>
             </div>
-            {mutation.error && <ErrorNotice error={mutation.error} />}
-            <button
-              className="btn-primary w-full"
-              disabled={
-                !cart.length ||
-                !customerName.trim() ||
-                mutation.isPending ||
-                (payment === "CASH" && received < total)
-              }
-              onClick={checkout}
-            >
-              {mutation.isPending ? "Memproses..." : "Bayar sekarang"}
-            </button>
-          </div>
+          )}
         </aside>
       </div>
       {result && (
@@ -519,7 +664,10 @@ export default function PosPage() {
               )}
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Link className="btn-ghost text-center" href={`/transactions/${result.id}`}>
+              <Link
+                className="btn-ghost text-center"
+                href={`/transactions/${result.id}`}
+              >
                 Lihat & cetak
               </Link>
               <button className="btn-primary" onClick={reset}>
