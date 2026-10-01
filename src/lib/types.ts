@@ -1,0 +1,81 @@
+export type Role = "OWNER" | "CASHIER";
+export type User = {
+  id: string;
+  name?: string;
+  email: string;
+  role: Role;
+  status?: "ACTIVE" | "INACTIVE";
+};
+export type Category = {
+  id: string;
+  name: string;
+  description?: string;
+  sortOrder: number;
+  isActive: boolean;
+};
+export type Product = {
+  id: string;
+  categoryId: string;
+  name: string;
+  sku: string;
+  pricingType: "FIXED" | "PER_ITEM";
+  price: number;
+  stock: number | null;
+  trackStock: boolean;
+  imageUrl?: string;
+  isActive: boolean;
+  category: Category;
+};
+export type TransactionItem = {
+  id: string;
+  productName: string;
+  sku: string;
+  unitPrice: number;
+  quantity: number;
+  subtotal: number;
+};
+export type Transaction = {
+  id: string;
+  invoiceNo: string;
+  subtotal: number;
+  discount: number;
+  tax: number;
+  taxPercentage: string;
+  total: number;
+  spicyLevel: number;
+  notes?: string;
+  paymentMethod: "CASH" | "QRIS" | "TRANSFER";
+  amountReceived?: number;
+  changeAmount: number;
+  status: "PAID" | "VOID";
+  paidAt: string;
+  voidReason?: string;
+  storeName: string;
+  storeAddress?: string;
+  storePhone?: string;
+  receiptHeader?: string;
+  receiptFooter?: string;
+  receiptPaperSize: "MM58" | "MM80";
+  cashier: { id: string; name: string };
+  items: TransactionItem[];
+};
+export type Expense = {
+  id: string;
+  description: string;
+  amount: number;
+  expenseDate: string;
+  notes?: string;
+  createdBy?: { id: string; name: string };
+};
+export type Settings = {
+  id: string;
+  storeName: string;
+  address?: string;
+  phone?: string;
+  currency: string;
+  taxEnabled: boolean;
+  taxPercentage: string | number;
+  receiptHeader?: string;
+  receiptFooter?: string;
+  receiptPaperSize: "MM58" | "MM80";
+};
