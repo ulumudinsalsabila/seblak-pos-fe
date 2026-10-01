@@ -8,8 +8,8 @@ import { ErrorNotice } from "@/components/ui";
 export default function LoginPage() {
   const { user, loading, login } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("owner@seblak.local");
-  const [password, setPassword] = useState("ChangeMe123!");
+  const [email, setEmail] = useState("owner@mail.com");
+  const [password, setPassword] = useState("12345678");
   const [error, setError] = useState<unknown>();
   const [pending, setPending] = useState(false);
   useEffect(() => {
