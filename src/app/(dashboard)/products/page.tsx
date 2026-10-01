@@ -10,6 +10,7 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
+  ImagePlus,
   Pencil,
   Plus,
   Search,
@@ -44,6 +45,7 @@ const initialForm = {
   price: 15000,
   trackStock: false,
   stock: 0,
+  imageUrl: "",
 };
 
 export default function ProductsPage() {
@@ -96,6 +98,49 @@ export default function ProductsPage() {
       void client.invalidateQueries({ queryKey: ["products"] });
     },
   });
+  const uploadImage = useMutation({
+    mutationFn: async (file: File) => {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+        throw new Error("Gambar harus berformat JPEG, PNG, atau WebP");
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error("Ukuran gambar maksimal 5 MB");
+      }
+      const signed = await api<{
+        data: {
+          cloudName: string;
+          apiKey: string;
+          timestamp: number;
+          folder: string;
+          signature: string;
+        };
+      }>("/products/image-signature", { method: "POST" });
+      const body = new FormData();
+      body.append("file", file);
+      body.append("api_key", signed.data.apiKey);
+      body.append("timestamp", String(signed.data.timestamp));
+      body.append("folder", signed.data.folder);
+      body.append("signature", signed.data.signature);
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${signed.data.cloudName}/image/upload`,
+        { method: "POST", body },
+      );
+      const uploaded = (await response.json()) as {
+        secure_url?: string;
+        error?: { message?: string };
+      };
+      if (!response.ok || !uploaded.secure_url) {
+        throw new Error(uploaded.error?.message ?? "Upload gambar gagal");
+      }
+      return uploaded.secure_url;
+    },
+    onSuccess: (imageUrl) => {
+      setForm((current) => ({
+        ...current,
+        imageUrl,
+      }));
+    },
+  });
   const toggle = useMutation({
     mutationFn: (item: Product) =>
       api(`/products/${item.id}`, {
@@ -123,14 +168,16 @@ export default function ProductsPage() {
   }
 
   function closeDialog() {
-    if (save.isPending) return;
+    if (save.isPending || uploadImage.isPending) return;
     setDialogOpen(false);
     setEditingProduct(null);
     save.reset();
+    uploadImage.reset();
   }
 
   function openCreateDialog() {
     save.reset();
+    uploadImage.reset();
     setEditingProduct(null);
     setForm({ ...initialForm });
     setDialogOpen(true);
@@ -138,6 +185,7 @@ export default function ProductsPage() {
 
   function openEditDialog(item: Product) {
     save.reset();
+    uploadImage.reset();
     setEditingProduct(item);
     setForm({
       categoryId: item.categoryId,
@@ -147,6 +195,7 @@ export default function ProductsPage() {
       price: item.price,
       trackStock: item.trackStock,
       stock: item.stock ?? 0,
+      imageUrl: item.imageUrl ?? "",
     });
     setDialogOpen(true);
   }
@@ -431,6 +480,61 @@ export default function ProductsPage() {
                   />
                 </label>
               </div>
+              <div>
+                <span className="label">GAMBAR PRODUK</span>
+                <div className="grid gap-4 rounded-xl border border-[#eadfd3] bg-[#fff8f1] p-4 sm:grid-cols-[120px_1fr]">
+                  <div
+                    className="grid aspect-square place-items-center overflow-hidden rounded-xl border border-[#eadfd3] bg-white bg-cover bg-center text-[#c9b8aa]"
+                    style={
+                      form.imageUrl
+                        ? {
+                            backgroundImage: `url(${JSON.stringify(form.imageUrl)})`,
+                          }
+                        : undefined
+                    }
+                  >
+                    {!form.imageUrl && <ImagePlus size={34} />}
+                  </div>
+                  <div className="flex min-w-0 flex-col justify-center gap-2">
+                    <label className="btn-ghost relative cursor-pointer text-center">
+                      <input
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        disabled={uploadImage.isPending}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) uploadImage.mutate(file);
+                          event.target.value = "";
+                        }}
+                      />
+                      {uploadImage.isPending
+                        ? "Mengunggah gambar..."
+                        : form.imageUrl
+                          ? "Ganti gambar"
+                          : "Pilih gambar"}
+                    </label>
+                    {form.imageUrl && (
+                      <button
+                        type="button"
+                        className="text-sm font-bold text-red-600"
+                        disabled={uploadImage.isPending}
+                        onClick={() =>
+                          setForm((current) => ({
+                            ...current,
+                            imageUrl: "",
+                          }))
+                        }
+                      >
+                        Hapus gambar dari produk
+                      </button>
+                    )}
+                    <p className="text-xs leading-relaxed text-[#796c63]">
+                      JPEG, PNG, atau WebP. Maksimal 5 MB.
+                    </p>
+                  </div>
+                </div>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label>
                   <span className="label">TIPE HARGA</span>
@@ -484,17 +588,21 @@ export default function ProductsPage() {
                   />
                 </label>
               )}
+              {uploadImage.error && <ErrorNotice error={uploadImage.error} />}
               {save.error && <ErrorNotice error={save.error} />}
               <div className="grid grid-cols-2 gap-3 border-t border-[#eadfd3] pt-4">
                 <button
                   type="button"
                   className="btn-ghost"
-                  disabled={save.isPending}
+                  disabled={save.isPending || uploadImage.isPending}
                   onClick={closeDialog}
                 >
                   Batal
                 </button>
-                <button className="btn-primary" disabled={save.isPending}>
+                <button
+                  className="btn-primary"
+                  disabled={save.isPending || uploadImage.isPending}
+                >
                   {save.isPending
                     ? "Menyimpan..."
                     : editingProduct
