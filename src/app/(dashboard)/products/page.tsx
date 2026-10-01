@@ -7,7 +7,14 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Plus, Search, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
 import { api } from "@/lib/api";
 import { rupiah } from "@/lib/format";
 import type { Category, Product } from "@/lib/types";
@@ -42,6 +49,7 @@ const initialForm = {
 export default function ProductsPage() {
   const client = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [filters, setFilters] = useState({
     search: "",
@@ -71,10 +79,10 @@ export default function ProductsPage() {
     queryFn: () => api<{ data: Category[] }>("/categories"),
   });
 
-  const create = useMutation({
+  const save = useMutation({
     mutationFn: () =>
-      api("/products", {
-        method: "POST",
+      api(editingProduct ? `/products/${editingProduct.id}` : "/products", {
+        method: editingProduct ? "PATCH" : "POST",
         body: JSON.stringify({
           ...form,
           stock: form.trackStock ? form.stock : undefined,
@@ -82,6 +90,7 @@ export default function ProductsPage() {
       }),
     onSuccess: () => {
       setForm({ ...initialForm });
+      setEditingProduct(null);
       setDialogOpen(false);
       setFilters((value) => ({ ...value, page: 1 }));
       void client.invalidateQueries({ queryKey: ["products"] });
@@ -101,7 +110,7 @@ export default function ProductsPage() {
 
   function submitProduct(event: FormEvent) {
     event.preventDefault();
-    create.mutate();
+    save.mutate();
   }
 
   function submitSearch(event: FormEvent) {
@@ -114,9 +123,32 @@ export default function ProductsPage() {
   }
 
   function closeDialog() {
-    if (create.isPending) return;
+    if (save.isPending) return;
     setDialogOpen(false);
-    create.reset();
+    setEditingProduct(null);
+    save.reset();
+  }
+
+  function openCreateDialog() {
+    save.reset();
+    setEditingProduct(null);
+    setForm({ ...initialForm });
+    setDialogOpen(true);
+  }
+
+  function openEditDialog(item: Product) {
+    save.reset();
+    setEditingProduct(item);
+    setForm({
+      categoryId: item.categoryId,
+      name: item.name,
+      sku: item.sku,
+      pricingType: item.pricingType,
+      price: item.price,
+      trackStock: item.trackStock,
+      stock: item.stock ?? 0,
+    });
+    setDialogOpen(true);
   }
 
   if (products.isLoading || categories.isLoading) return <Loading />;
@@ -134,10 +166,7 @@ export default function ProductsPage() {
           <button
             type="button"
             className="btn-primary flex items-center gap-2"
-            onClick={() => {
-              create.reset();
-              setDialogOpen(true);
-            }}
+            onClick={openCreateDialog}
           >
             <Plus size={18} />
             Tambah produk
@@ -241,17 +270,27 @@ export default function ProductsPage() {
                       status={item.isActive ? "ACTIVE" : "INACTIVE"}
                     />
                   </td>
-                  <td className="p-4 text-right">
-                    <button
-                      type="button"
-                      className="btn-ghost"
-                      disabled={
-                        toggle.isPending && toggle.variables?.id === item.id
-                      }
-                      onClick={() => toggle.mutate(item)}
-                    >
-                      {item.isActive ? "Nonaktifkan" : "Aktifkan"}
-                    </button>
+                  <td className="p-4">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        className="btn-ghost flex items-center gap-1.5"
+                        onClick={() => openEditDialog(item)}
+                      >
+                        <Pencil size={15} />
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        disabled={
+                          toggle.isPending && toggle.variables?.id === item.id
+                        }
+                        onClick={() => toggle.mutate(item)}
+                      >
+                        {item.isActive ? "Nonaktifkan" : "Aktifkan"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -320,10 +359,12 @@ export default function ProductsPage() {
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 id="product-dialog-title" className="text-xl font-black">
-                  Produk baru
+                  {editingProduct ? "Edit produk" : "Produk baru"}
                 </h2>
                 <p className="mt-1 text-sm text-[#796c63]">
-                  Tambahkan produk ke katalog Saung Sunja.
+                  {editingProduct
+                    ? "Perbarui informasi produk yang dipilih."
+                    : "Tambahkan produk ke katalog Saung Sunja."}
                 </p>
               </div>
               <button
@@ -350,7 +391,10 @@ export default function ProductsPage() {
                 >
                   <option value="">Pilih kategori</option>
                   {categories.data?.data
-                    .filter((category) => category.isActive)
+                    .filter(
+                      (category) =>
+                        category.isActive || category.id === form.categoryId,
+                    )
                     .map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
@@ -440,18 +484,22 @@ export default function ProductsPage() {
                   />
                 </label>
               )}
-              {create.error && <ErrorNotice error={create.error} />}
+              {save.error && <ErrorNotice error={save.error} />}
               <div className="grid grid-cols-2 gap-3 border-t border-[#eadfd3] pt-4">
                 <button
                   type="button"
                   className="btn-ghost"
-                  disabled={create.isPending}
+                  disabled={save.isPending}
                   onClick={closeDialog}
                 >
                   Batal
                 </button>
-                <button className="btn-primary" disabled={create.isPending}>
-                  {create.isPending ? "Menyimpan..." : "Simpan produk"}
+                <button className="btn-primary" disabled={save.isPending}>
+                  {save.isPending
+                    ? "Menyimpan..."
+                    : editingProduct
+                      ? "Simpan perubahan"
+                      : "Simpan produk"}
                 </button>
               </div>
             </form>
