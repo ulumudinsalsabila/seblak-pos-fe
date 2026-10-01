@@ -119,12 +119,18 @@ label:has(> .field) > .label {
   font-size: 0.72rem;
   font-weight: 800;
 }
+.print-only {
+  display: none;
+}
 @media print {
   .no-print {
     display: none !important;
   }
   body {
     background: white;
+  }
+  .print-only {
+    display: block !important;
   }
   .receipt-print {
     border: 0 !important;

@@ -1,11 +1,10 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  CheckCircle2,
   Minus,
   Plus,
+  Printer,
   Search,
   ShoppingCart,
   Trash2,
@@ -15,6 +14,7 @@ import {
 import { api } from "@/lib/api";
 import { rupiah } from "@/lib/format";
 import type { Category, Product, Settings, Transaction } from "@/lib/types";
+import { Receipt } from "@/components/receipt";
 import { ErrorNotice, Loading } from "@/components/ui";
 
 type CartLine = { product: Product; quantity: number };
@@ -161,7 +161,7 @@ export default function PosPage() {
     return <Loading />;
   return (
     <>
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_440px] 2xl:grid-cols-[minmax(0,1fr)_500px]">
+      <div className="no-print grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_440px] 2xl:grid-cols-[minmax(0,1fr)_500px]">
         <section className="min-w-0">
           <div className="card sticky top-20 z-10 mb-5 bg-[#fffdfa]/95 p-3 shadow-[0_14px_35px_rgba(75,47,31,0.12)] backdrop-blur-xl sm:p-4">
             <div className="relative">
@@ -678,47 +678,63 @@ export default function PosPage() {
         </aside>
       </div>
       {result && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4">
-          <div className="card w-full max-w-md p-6">
-            <button onClick={() => setResult(null)} className="float-right">
-              <X />
-            </button>
-            <CheckCircle2 className="mb-4 text-emerald-600" size={50} />
-            <h2 className="text-2xl font-black">Transaksi berhasil</h2>
-            <p className="mt-1 text-sm text-[#796c63]">
-              {result.customerName} · {result.invoiceNo}
-            </p>
-            <div className="my-6 rounded-xl bg-[#fff7ef] p-4">
-              <div className="flex justify-between">
-                <span>Total</span>
-                <b>{rupiah(result.total)}</b>
+        <>
+          <div className="no-print fixed inset-0 z-50 flex justify-end bg-black/45 backdrop-blur-sm">
+            <button
+              type="button"
+              aria-label="Tutup preview nota"
+              className="absolute inset-0 cursor-default"
+              onClick={reset}
+            />
+            <aside
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="receipt-drawer-title"
+              className="relative z-10 flex h-full w-full max-w-lg flex-col bg-[#f8f3ed] shadow-[-20px_0_50px_rgba(36,28,23,0.2)]"
+            >
+              <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#eadfd3] bg-white p-5">
+                <div>
+                  <p className="text-sm font-bold text-emerald-700">
+                    Transaksi berhasil
+                  </p>
+                  <h2 id="receipt-drawer-title" className="text-xl font-black">
+                    Preview nota
+                  </h2>
+                  <p className="mt-1 text-sm text-[#796c63]">
+                    {result.customerName} · {result.invoiceNo}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Tutup"
+                  className="rounded-xl border border-[#eadfd3] bg-white p-2 text-[#796c63]"
+                  onClick={reset}
+                >
+                  <X size={20} />
+                </button>
               </div>
-              {result.paymentMethod === "CASH" && (
-                <>
-                  <div className="mt-2 flex justify-between">
-                    <span>Diterima</span>
-                    <b>{rupiah(result.amountReceived ?? 0)}</b>
-                  </div>
-                  <div className="mt-2 flex justify-between text-emerald-700">
-                    <span>Kembalian</span>
-                    <b>{rupiah(result.changeAmount)}</b>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                className="btn-ghost text-center"
-                href={`/transactions/${result.id}`}
-              >
-                Lihat & cetak
-              </Link>
-              <button className="btn-primary" onClick={reset}>
-                Transaksi baru
-              </button>
-            </div>
+              <div className="min-h-0 flex-1 overflow-y-auto p-5">
+                <Receipt transaction={result} />
+              </div>
+              <div className="grid shrink-0 grid-cols-2 gap-3 border-t border-[#eadfd3] bg-white p-5">
+                <button type="button" className="btn-ghost" onClick={reset}>
+                  Transaksi baru
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary flex items-center justify-center gap-2"
+                  onClick={() => window.print()}
+                >
+                  <Printer size={18} />
+                  Print nota
+                </button>
+              </div>
+            </aside>
           </div>
-        </div>
+          <div className="print-only">
+            <Receipt transaction={result} />
+          </div>
+        </>
       )}
     </>
   );

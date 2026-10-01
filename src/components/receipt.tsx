@@ -3,7 +3,8 @@ import { dateTime, rupiah } from "@/lib/format";
 export function Receipt({ transaction }: { transaction: Transaction }) {
   const width =
     transaction.receiptPaperSize === "MM80" ? "max-w-[80mm]" : "max-w-[58mm]";
-  const orderType = transaction.orderType === "TAKEAWAY" ? "Bungkus" : "Makan di tempat";
+  const orderType =
+    transaction.orderType === "TAKEAWAY" ? "Bungkus" : "Makan di tempat";
   const broth = { LITTLE: "Sedikit", MEDIUM: "Sedang", MUCH: "Banyak" }[
     transaction.brothLevel
   ];
