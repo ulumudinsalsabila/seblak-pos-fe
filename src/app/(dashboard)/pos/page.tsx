@@ -250,8 +250,8 @@ export default function PosPage() {
             </p>
           )}
         </section>
-        <aside className="card h-fit overflow-hidden xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
-          <div className="flex items-center gap-3 border-b border-[#eadfd3] p-5">
+        <aside className="card h-fit overflow-clip xl:sticky xl:top-20 xl:flex xl:max-h-[calc(100vh-6rem)] xl:flex-col">
+          <div className="flex shrink-0 items-center gap-3 border-b border-[#eadfd3] p-5">
             <ShoppingCart size={28} />
             <div className="flex-1">
               <h2 className="text-xl font-black">
@@ -274,7 +274,7 @@ export default function PosPage() {
               <Trash2 size={20} />
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-2 border-b border-[#eadfd3] bg-[#fffdfa] px-4 py-3">
+          <div className="grid shrink-0 grid-cols-3 gap-2 border-b border-[#eadfd3] bg-[#fffdfa] px-4 py-3">
             {(
               [
                 [1, "Pesanan"],
@@ -316,7 +316,7 @@ export default function PosPage() {
           </div>
 
           {checkoutStep === 1 && (
-            <div>
+            <div className="xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
               <div className="max-h-[42vh] min-h-48 space-y-3 overflow-y-auto p-4">
                 {cart.map((line) => (
                   <div
@@ -394,7 +394,7 @@ export default function PosPage() {
           )}
 
           {checkoutStep === 2 && (
-            <div className="space-y-5 bg-[#fffdfa] p-5">
+            <div className="space-y-5 bg-[#fffdfa] p-5 xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
               <label>
                 <span className="label">NAMA CUSTOMER</span>
                 <input
@@ -518,117 +518,160 @@ export default function PosPage() {
           )}
 
           {checkoutStep === 3 && (
-            <div className="space-y-5 bg-[#fffdfa] p-5">
-              <div className="rounded-xl border border-[#eadfd3] bg-white p-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-[#796c63]">
-                  Customer
-                </p>
-                <div className="mt-1 flex items-center justify-between gap-3">
-                  <b className="truncate">{customerName}</b>
-                  <button
-                    type="button"
-                    className="text-sm font-bold text-[#e7562c]"
-                    onClick={() => setCheckoutStep(2)}
-                  >
-                    Ubah
-                  </button>
-                </div>
-              </div>
-              <label>
-                <span className="label">DISKON NOMINAL</span>
-                <input
-                  className="field"
-                  type="number"
-                  min={0}
-                  max={subtotal}
-                  value={discount}
-                  onChange={(e) =>
-                    setDiscount(
-                      Math.min(subtotal, Math.max(0, Number(e.target.value))),
-                    )
-                  }
-                />
-              </label>
-              <div>
-                <span className="label">METODE PEMBAYARAN</span>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["CASH", "QRIS", "TRANSFER"] as const).map((method) => (
+            <div className="flex min-h-0 flex-1 flex-col bg-[#fffdfa]">
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
+                <div className="rounded-xl border border-[#eadfd3] bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#796c63]">
+                    Customer
+                  </p>
+                  <div className="mt-1 flex items-center justify-between gap-3">
+                    <b className="truncate">{customerName}</b>
                     <button
                       type="button"
-                      key={method}
-                      onClick={() => setPayment(method)}
-                      className={
-                        payment === method ? "btn-primary" : "btn-ghost"
-                      }
+                      className="text-sm font-bold text-[#e7562c]"
+                      onClick={() => setCheckoutStep(2)}
                     >
-                      {method}
+                      Ubah
                     </button>
-                  ))}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-[#eadfd3] bg-white p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-black">Ringkasan pesanan</p>
+                      <p className="text-xs text-[#796c63]">
+                        {cart.reduce((sum, line) => sum + line.quantity, 0)}{" "}
+                        item
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-sm font-bold text-[#e7562c]"
+                      onClick={() => setCheckoutStep(1)}
+                    >
+                      Ubah
+                    </button>
+                  </div>
+                  <div className="divide-y divide-[#eee3d9]">
+                    {cart.map((line) => (
+                      <div
+                        key={line.product.id}
+                        className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold">
+                            {line.product.name}
+                          </p>
+                          <p className="mt-0.5 text-xs text-[#796c63]">
+                            {line.quantity} × {rupiah(line.product.price)}
+                          </p>
+                        </div>
+                        <b className="shrink-0 text-sm">
+                          {rupiah(line.product.price * line.quantity)}
+                        </b>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              {payment === "CASH" && (
+
+              <div className="sticky bottom-0 z-10 shrink-0 space-y-4 border-t border-[#eadfd3] bg-[#fffdfa]/98 p-5 shadow-[0_-14px_30px_rgba(75,47,31,0.08)] backdrop-blur-xl">
                 <label>
-                  <span className="label">UANG DITERIMA</span>
+                  <span className="label">DISKON NOMINAL</span>
                   <input
                     className="field"
                     type="number"
-                    min={total}
-                    value={received || ""}
-                    onChange={(e) => setReceived(Number(e.target.value))}
-                    placeholder={rupiah(total)}
+                    min={0}
+                    max={subtotal}
+                    value={discount}
+                    onChange={(e) =>
+                      setDiscount(
+                        Math.min(subtotal, Math.max(0, Number(e.target.value))),
+                      )
+                    }
                   />
                 </label>
-              )}
-              <div className="space-y-2 rounded-xl bg-[#fff1e9] p-4 text-sm">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <b>{rupiah(subtotal)}</b>
+                <div>
+                  <span className="label">METODE PEMBAYARAN</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["CASH", "QRIS", "TRANSFER"] as const).map((method) => (
+                      <button
+                        type="button"
+                        key={method}
+                        onClick={() => setPayment(method)}
+                        className={
+                          payment === method ? "btn-primary" : "btn-ghost"
+                        }
+                      >
+                        {method}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Diskon</span>
-                  <b>-{rupiah(discount)}</b>
-                </div>
-                {tax > 0 && (
+                {payment === "CASH" && (
+                  <label>
+                    <span className="label">UANG DITERIMA</span>
+                    <input
+                      className="field"
+                      type="number"
+                      min={total}
+                      value={received || ""}
+                      onChange={(e) => setReceived(Number(e.target.value))}
+                      placeholder={rupiah(total)}
+                    />
+                  </label>
+                )}
+                <div className="space-y-2 rounded-xl bg-[#fff1e9] p-4 text-sm">
                   <div className="flex justify-between">
-                    <span>Pajak</span>
-                    <b>{rupiah(tax)}</b>
+                    <span>Subtotal</span>
+                    <b>{rupiah(subtotal)}</b>
                   </div>
-                )}
-                <div className="flex justify-between border-t border-dashed border-[#d8c8ba] pt-3 text-xl">
-                  <span className="font-black">Total</span>
-                  <b className="text-[#e7562c]">{rupiah(total)}</b>
+                  <div className="flex justify-between">
+                    <span>Diskon</span>
+                    <b>-{rupiah(discount)}</b>
+                  </div>
+                  {tax > 0 && (
+                    <div className="flex justify-between">
+                      <span>Pajak</span>
+                      <b>{rupiah(tax)}</b>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t border-dashed border-[#d8c8ba] pt-3 text-xl">
+                    <span className="font-black">Total</span>
+                    <b className="text-[#e7562c]">{rupiah(total)}</b>
+                  </div>
+                  {payment === "CASH" && received >= total && (
+                    <div className="flex justify-between font-bold text-emerald-700">
+                      <span>Kembalian</span>
+                      <span>{rupiah(received - total)}</span>
+                    </div>
+                  )}
                 </div>
-                {payment === "CASH" && received >= total && (
-                  <div className="flex justify-between font-bold text-emerald-700">
-                    <span>Kembalian</span>
-                    <span>{rupiah(received - total)}</span>
-                  </div>
-                )}
-              </div>
-              {mutation.error && <ErrorNotice error={mutation.error} />}
-              <div className="grid grid-cols-[auto_1fr] gap-3">
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  onClick={() => setCheckoutStep(2)}
-                >
-                  Kembali
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={
-                    !cart.length ||
-                    !customerName.trim() ||
-                    mutation.isPending ||
-                    (payment === "CASH" && received < total)
-                  }
-                  onClick={checkout}
-                >
-                  {mutation.isPending
-                    ? "Memproses..."
-                    : `Bayar ${rupiah(total)}`}
-                </button>
+                {mutation.error && <ErrorNotice error={mutation.error} />}
+                <div className="grid grid-cols-[auto_1fr] gap-3">
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={() => setCheckoutStep(2)}
+                  >
+                    Kembali
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    disabled={
+                      !cart.length ||
+                      !customerName.trim() ||
+                      mutation.isPending ||
+                      (payment === "CASH" && received < total)
+                    }
+                    onClick={checkout}
+                  >
+                    {mutation.isPending
+                      ? "Memproses..."
+                      : `Bayar ${rupiah(total)}`}
+                  </button>
+                </div>
               </div>
             </div>
           )}
