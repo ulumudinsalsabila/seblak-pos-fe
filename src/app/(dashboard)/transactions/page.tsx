@@ -113,6 +113,9 @@ export default function TransactionsPage() {
                   >
                     {item.invoiceNo}
                   </Link>
+                  <p className="mt-1 text-xs text-[#796c63]">
+                    {item.customerName}
+                  </p>
                 </td>
                 <td className="p-4">{dateTime(item.paidAt)}</td>
                 <td className="p-4">{item.cashier.name}</td>

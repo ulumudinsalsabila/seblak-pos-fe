@@ -3,6 +3,13 @@ import { dateTime, rupiah } from "@/lib/format";
 export function Receipt({ transaction }: { transaction: Transaction }) {
   const width =
     transaction.receiptPaperSize === "MM80" ? "max-w-[80mm]" : "max-w-[58mm]";
+  const orderType = transaction.orderType === "TAKEAWAY" ? "Bungkus" : "Makan di tempat";
+  const broth = { LITTLE: "Sedikit", MEDIUM: "Sedang", MUCH: "Banyak" }[
+    transaction.brothLevel
+  ];
+  const taste = { SALTY: "Asin", SAVORY: "Gurih", SWEET: "Manis" }[
+    transaction.tastePreference
+  ];
   return (
     <div
       className={`receipt-print card mx-auto ${width} p-5 font-mono text-[11px] leading-5 text-black`}
@@ -19,6 +26,8 @@ export function Receipt({ transaction }: { transaction: Transaction }) {
         <p>{transaction.invoiceNo}</p>
         <p>{dateTime(transaction.paidAt)}</p>
         <p>Kasir: {transaction.cashier.name}</p>
+        <p>Customer: {transaction.customerName}</p>
+        <p>{orderType}</p>
       </div>
       <div className="space-y-2">
         {transaction.items.map((item) => (
@@ -70,6 +79,8 @@ export function Receipt({ transaction }: { transaction: Transaction }) {
         )}
       </div>
       <p>Level pedas: {transaction.spicyLevel}</p>
+      <p>Kuah: {broth}</p>
+      <p>Rasa: {taste}</p>
       {transaction.notes && <p>Catatan: {transaction.notes}</p>}
       {transaction.status === "VOID" && (
         <p className="mt-3 border border-black p-2 text-center font-black">

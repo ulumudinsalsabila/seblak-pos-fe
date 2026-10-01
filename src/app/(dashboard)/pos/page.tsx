@@ -17,6 +17,9 @@ import type { Category, Product, Settings, Transaction } from "@/lib/types";
 import { ErrorNotice, Loading, PageHeader } from "@/components/ui";
 
 type CartLine = { product: Product; quantity: number };
+const choiceClass = (active: boolean) =>
+  active ? "btn-primary py-2.5" : "btn-ghost py-2.5";
+
 export default function PosPage() {
   const client = useQueryClient();
   const products = useQuery({
@@ -34,7 +37,17 @@ export default function PosPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [customerName, setCustomerName] = useState("");
+  const [orderType, setOrderType] = useState<"DINE_IN" | "TAKEAWAY">(
+    "DINE_IN",
+  );
   const [spicy, setSpicy] = useState(0);
+  const [brothLevel, setBrothLevel] = useState<"LITTLE" | "MEDIUM" | "MUCH">(
+    "MEDIUM",
+  );
+  const [tastePreference, setTastePreference] = useState<
+    "SALTY" | "SAVORY" | "SWEET"
+  >("SAVORY");
   const [notes, setNotes] = useState("");
   const [discount, setDiscount] = useState(0);
   const [payment, setPayment] = useState<"CASH" | "QRIS" | "TRANSFER">("CASH");
@@ -113,7 +126,11 @@ export default function PosPage() {
         productId: l.product.id,
         quantity: l.quantity,
       })),
+      customerName: customerName.trim(),
+      orderType,
       spicyLevel: spicy,
+      brothLevel,
+      tastePreference,
       notes,
       discount,
       paymentMethod: payment,
@@ -122,7 +139,11 @@ export default function PosPage() {
   }
   function reset() {
     setCart([]);
+    setCustomerName("");
+    setOrderType("DINE_IN");
     setSpicy(0);
+    setBrothLevel("MEDIUM");
+    setTastePreference("SAVORY");
     setNotes("");
     setDiscount(0);
     setReceived(0);
@@ -277,6 +298,33 @@ export default function PosPage() {
             )}
           </div>
           <div className="space-y-4 border-t border-[#eadfd3] bg-[#fffdfa] p-5">
+            <label>
+              <span className="label">NAMA CUSTOMER</span>
+              <input
+                className="field"
+                value={customerName}
+                maxLength={100}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Masukkan nama customer"
+              />
+            </label>
+            <div>
+              <span className="label">JENIS PESANAN</span>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setOrderType("DINE_IN")}
+                  className={choiceClass(orderType === "DINE_IN")}
+                >
+                  Makan di tempat
+                </button>
+                <button
+                  onClick={() => setOrderType("TAKEAWAY")}
+                  className={choiceClass(orderType === "TAKEAWAY")}
+                >
+                  Bungkus
+                </button>
+              </div>
+            </div>
             <div>
               <span className="label">LEVEL PEDAS</span>
               <div className="grid grid-cols-6 gap-1">
@@ -287,6 +335,42 @@ export default function PosPage() {
                     className={`rounded-lg py-2 text-sm font-black ${spicy === level ? "bg-[#e7562c] text-white" : "bg-white ring-1 ring-[#eadfd3]"}`}
                   >
                     {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span className="label">KUAH</span>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ["LITTLE", "Sedikit"],
+                  ["MEDIUM", "Sedang"],
+                  ["MUCH", "Banyak"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setBrothLevel(value)}
+                    className={choiceClass(brothLevel === value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <span className="label">RASA</span>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ["SALTY", "Asin"],
+                  ["SAVORY", "Gurih"],
+                  ["SWEET", "Manis"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setTastePreference(value)}
+                    className={choiceClass(tastePreference === value)}
+                  >
+                    {label}
                   </button>
                 ))}
               </div>
@@ -364,6 +448,7 @@ export default function PosPage() {
               className="btn-primary w-full"
               disabled={
                 !cart.length ||
+                !customerName.trim() ||
                 mutation.isPending ||
                 (payment === "CASH" && received < total)
               }
@@ -382,7 +467,9 @@ export default function PosPage() {
             </button>
             <CheckCircle2 className="mb-4 text-emerald-600" size={50} />
             <h2 className="text-2xl font-black">Transaksi berhasil</h2>
-            <p className="mt-1 text-sm text-[#796c63]">{result.invoiceNo}</p>
+            <p className="mt-1 text-sm text-[#796c63]">
+              {result.customerName} · {result.invoiceNo}
+            </p>
             <div className="my-6 rounded-xl bg-[#fff7ef] p-4">
               <div className="flex justify-between">
                 <span>Total</span>

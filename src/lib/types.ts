@@ -42,7 +42,11 @@ export type Transaction = {
   tax: number;
   taxPercentage: string;
   total: number;
+  customerName: string;
+  orderType: "DINE_IN" | "TAKEAWAY";
   spicyLevel: number;
+  brothLevel: "LITTLE" | "MEDIUM" | "MUCH";
+  tastePreference: "SALTY" | "SAVORY" | "SWEET";
   notes?: string;
   paymentMethod: "CASH" | "QRIS" | "TRANSFER";
   amountReceived?: number;
