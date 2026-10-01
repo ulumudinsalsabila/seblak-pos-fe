@@ -3,8 +3,8 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
-  title: "Seblak Prasmanan POS",
-  description: "Kasir cepat untuk Seblak Prasmanan",
+  title: "Saung Sunja POS",
+  description: "Kasir cepat untuk Saung Sunja",
 };
 export default function RootLayout({
   children,

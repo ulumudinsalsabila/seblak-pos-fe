@@ -36,7 +36,7 @@ export default function LoginPage() {
           <span className="rounded-2xl bg-[#e7562c] p-3">
             <Flame />
           </span>{" "}
-          SEBLAK PRASMANAN
+          SAUNG SUNJA
         </div>
         <div>
           <p className="mb-4 text-sm font-bold tracking-[.3em] text-orange-300">
@@ -53,7 +53,7 @@ export default function LoginPage() {
           </p>
         </div>
         <p className="text-sm text-orange-100/45">
-          Seblak Prasmanan POS · Single Outlet
+          Saung Sunja POS · Single Outlet
         </p>
       </section>
       <section className="flex items-center justify-center p-6">

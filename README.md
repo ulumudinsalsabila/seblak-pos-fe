@@ -1,6 +1,6 @@
 # Seblak POS Frontend
 
-Next.js frontend untuk Seblak Prasmanan POS. Dokumentasi setup utama tersedia
+Next.js frontend untuk Saung Sunja POS. Dokumentasi setup utama tersedia
 di `../README.md`.
 
 ```bash
