@@ -45,7 +45,7 @@ export function Receipt({ transaction }: { transaction: Transaction }) {
               </span>
               <b>{rupiah(item.subtotal)}</b>
             </div>
-            <p className="text-[10px]">{itemOptions(item)}</p>
+            <p className="text-[10px]"><b>Opsi:</b> {itemOptions(item)}</p>
             {item.notes && <p className="font-bold">Catatan: {item.notes}</p>}
           </div>
         ))}
@@ -136,7 +136,7 @@ export function KitchenReceipt({ transaction }: { transaction: Transaction }) {
         {transaction.items.map((item) => (
           <div className="flex gap-3 text-base leading-5" key={item.id}>
             <b className="min-w-8 text-lg">{item.quantity}×</b>
-            <div><p className="font-bold">{item.productName}</p><p className="text-xs font-normal">{itemOptions(item)}</p>{item.notes && <p className="mt-1 border border-black p-1 text-xs font-black">CATATAN: {item.notes}</p>}</div>
+            <div><p className="font-bold">{item.productName}</p><p className="text-xs font-normal"><b>OPSI:</b> {itemOptions(item)}</p>{item.notes && <p className="mt-1 border border-black p-1 text-xs font-black">CATATAN: {item.notes}</p>}</div>
           </div>
         ))}
       </div>
