@@ -23,6 +23,7 @@ import {
 import { useState } from "react";
 import { clsx } from "clsx";
 import { useAuth } from "./auth-provider";
+import { useBranding } from "./branding-provider";
 
 const nav = [
   {
@@ -43,6 +44,7 @@ const nav = [
 ];
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
+  const branding = useBranding();
   const path = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -80,13 +82,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         >
           <Link href="/pos" className="flex items-center gap-3 font-black">
-            <span className="rounded-xl bg-[#e7562c] p-2">
-              <Flame size={20} />
+            <span
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#e7562c] bg-cover bg-center text-white"
+              style={
+                branding.logoUrl
+                  ? { backgroundImage: `url(${branding.logoUrl})` }
+                  : undefined
+              }
+            >
+              {!branding.logoUrl && <Flame size={20} />}
             </span>
             <span className={clsx(!sidebarExpanded && "lg:hidden")}>
-              SAUNG
-              <br />
-              <span className="text-orange-300">SUNJA</span>
+              {branding.storeName}
             </span>
           </Link>
           <button className="lg:hidden" onClick={() => setMobileOpen(false)}>
@@ -172,7 +179,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             {sidebarExpanded ? <PanelLeftClose /> : <PanelLeftOpen />}
           </button>
-          <span className="ml-3 font-black">Saung Sunja POS</span>
+          <span className="ml-3 font-black">{branding.storeName} POS</span>
           <div className="ml-auto text-right">
             <p className="text-sm font-black">
               {user?.role === "OWNER" ? "Owner" : "Kasir"}

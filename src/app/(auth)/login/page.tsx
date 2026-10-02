@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { Flame, LoaderCircle } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { ErrorNotice } from "@/components/ui";
+import { useBranding } from "@/components/branding-provider";
 
 export default function LoginPage() {
   const { user, loading, login } = useAuth();
+  const branding = useBranding();
   const router = useRouter();
   const [email, setEmail] = useState("owner@mail.com");
   const [password, setPassword] = useState("12345678");
@@ -33,10 +35,17 @@ export default function LoginPage() {
     <main className="grid min-h-screen lg:grid-cols-[1.1fr_.9fr]">
       <section className="hidden overflow-hidden bg-[#2d1c14] p-14 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="flex items-center gap-3 font-black">
-          <span className="rounded-2xl bg-[#e7562c] p-3">
-            <Flame />
+          <span
+            className="grid h-12 w-12 place-items-center rounded-2xl bg-[#e7562c] bg-cover bg-center"
+            style={
+              branding.logoUrl
+                ? { backgroundImage: `url(${branding.logoUrl})` }
+                : undefined
+            }
+          >
+            {!branding.logoUrl && <Flame />}
           </span>{" "}
-          SAUNG SUNJA
+          {branding.storeName}
         </div>
         <div>
           <p className="mb-4 text-sm font-bold tracking-[.3em] text-orange-300">
@@ -53,14 +62,21 @@ export default function LoginPage() {
           </p>
         </div>
         <p className="text-sm text-orange-100/45">
-          Saung Sunja POS · Single Outlet
+          {branding.storeName} POS · Single Outlet
         </p>
       </section>
       <section className="flex items-center justify-center p-6">
         <form onSubmit={submit} className="card w-full max-w-md p-8 sm:p-10">
           <div className="mb-8 lg:hidden">
-            <span className="inline-flex rounded-2xl bg-[#e7562c] p-3 text-white">
-              <Flame />
+            <span
+              className="inline-grid h-12 w-12 place-items-center rounded-2xl bg-[#e7562c] bg-cover bg-center text-white"
+              style={
+                branding.logoUrl
+                  ? { backgroundImage: `url(${branding.logoUrl})` }
+                  : undefined
+              }
+            >
+              {!branding.logoUrl && <Flame />}
             </span>
           </div>
           <p className="text-sm font-black tracking-[.2em] text-[#e7562c]">

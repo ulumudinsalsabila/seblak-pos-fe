@@ -79,6 +79,8 @@ export type Expense = {
 export type Settings = {
   id: string;
   storeName: string;
+  logoUrl?: string | null;
+  faviconUrl?: string | null;
   address?: string;
   phone?: string;
   currency: string;
@@ -88,3 +90,4 @@ export type Settings = {
   receiptFooter?: string;
   receiptPaperSize: "MM58" | "MM80";
 };
+export type Branding = Pick<Settings, "storeName" | "logoUrl" | "faviconUrl">;
