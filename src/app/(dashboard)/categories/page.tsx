@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, X } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Category } from "@/lib/types";
 import {
@@ -58,6 +58,12 @@ export default function CategoriesPage() {
         method: "PATCH",
         body: JSON.stringify({ isActive: !item.isActive }),
       }),
+    onSuccess: () =>
+      void client.invalidateQueries({ queryKey: ["categories"] }),
+  });
+  const remove = useMutation({
+    mutationFn: (item: Category) =>
+      api(`/categories/${item.id}`, { method: "DELETE" }),
     onSuccess: () =>
       void client.invalidateQueries({ queryKey: ["categories"] }),
   });
@@ -152,12 +158,25 @@ export default function CategoriesPage() {
                 >
                   {item.isActive ? "Nonaktifkan" : "Aktifkan"}
                 </button>
+                <button
+                  type="button"
+                  title="Hapus kategori"
+                  className="btn-ghost text-red-600"
+                  disabled={remove.isPending}
+                  onClick={() => {
+                    if (window.confirm(`Hapus kategori ${item.name}?`))
+                      remove.mutate(item);
+                  }}
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
             </div>
           ))}
         </div>
         {!query.data?.data.length && <Empty>Belum ada kategori.</Empty>}
       </section>
+      {remove.error && <div className="mt-4"><ErrorNotice error={remove.error} /></div>}
 
       {dialogOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center p-4">

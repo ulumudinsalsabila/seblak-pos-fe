@@ -14,6 +14,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Trash2,
   X,
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -26,6 +27,7 @@ import {
   PageHeader,
   StatusBadge,
 } from "@/components/ui";
+import { SearchSelect } from "@/components/form-controls";
 
 type ProductListResponse = {
   data: Product[];
@@ -152,6 +154,13 @@ export default function ProductsPage() {
       void client.invalidateQueries({ queryKey: ["products"] });
     },
   });
+  const remove = useMutation({
+    mutationFn: (item: Product) =>
+      api(`/products/${item.id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
 
   function submitProduct(event: FormEvent) {
     event.preventDefault();
@@ -240,39 +249,30 @@ export default function ProductsPage() {
               onChange={(event) => setSearchInput(event.target.value)}
             />
           </div>
-          <select
-            className="field"
+          <SearchSelect
             value={filters.categoryId}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                categoryId: event.target.value,
-                page: 1,
-              }))
+            placeholder="Semua kategori"
+            clearable
+            options={(categories.data?.data ?? []).map((category) => ({
+              value: category.id,
+              label: category.name,
+            }))}
+            onChange={(categoryId) =>
+              setFilters((value) => ({ ...value, categoryId, page: 1 }))
             }
-          >
-            <option value="">Semua kategori</option>
-            {categories.data?.data.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-          <select
-            className="field"
+          />
+          <SearchSelect
             value={filters.status}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                status: event.target.value,
-                page: 1,
-              }))
+            placeholder="Semua status"
+            clearable
+            options={[
+              { value: "ACTIVE", label: "Aktif" },
+              { value: "INACTIVE", label: "Nonaktif" },
+            ]}
+            onChange={(status) =>
+              setFilters((value) => ({ ...value, status, page: 1 }))
             }
-          >
-            <option value="">Semua status</option>
-            <option value="ACTIVE">Aktif</option>
-            <option value="INACTIVE">Nonaktif</option>
-          </select>
+          />
           <button className="btn-primary" type="submit">
             Cari
           </button>
@@ -339,6 +339,18 @@ export default function ProductsPage() {
                       >
                         {item.isActive ? "Nonaktifkan" : "Aktifkan"}
                       </button>
+                      <button
+                        type="button"
+                        title="Hapus produk"
+                        className="btn-ghost text-red-600"
+                        disabled={remove.isPending}
+                        onClick={() => {
+                          if (window.confirm(`Hapus produk ${item.name}?`))
+                            remove.mutate(item);
+                        }}
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -390,6 +402,7 @@ export default function ProductsPage() {
           </div>
         )}
       </section>
+      {remove.error && <div className="mt-4"><ErrorNotice error={remove.error} /></div>}
 
       {dialogOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center p-4">
@@ -427,30 +440,20 @@ export default function ProductsPage() {
             </div>
 
             <form onSubmit={submitProduct} className="space-y-4">
-              <label>
-                <span className="label">KATEGORI</span>
-                <select
-                  autoFocus
-                  className="field"
-                  required
-                  value={form.categoryId}
-                  onChange={(event) =>
-                    setForm({ ...form, categoryId: event.target.value })
-                  }
-                >
-                  <option value="">Pilih kategori</option>
-                  {categories.data?.data
-                    .filter(
-                      (category) =>
-                        category.isActive || category.id === form.categoryId,
-                    )
-                    .map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                </select>
-              </label>
+              <SearchSelect
+                label="KATEGORI"
+                value={form.categoryId}
+                options={(categories.data?.data ?? [])
+                  .filter(
+                    (category) =>
+                      category.isActive || category.id === form.categoryId,
+                  )
+                  .map((category) => ({
+                    value: category.id,
+                    label: category.name,
+                  }))}
+                onChange={(categoryId) => setForm({ ...form, categoryId })}
+              />
               <div className="grid gap-4 sm:grid-cols-2">
                 <label>
                   <span className="label">NAMA</span>
@@ -536,19 +539,17 @@ export default function ProductsPage() {
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label>
-                  <span className="label">TIPE HARGA</span>
-                  <select
-                    className="field"
-                    value={form.pricingType}
-                    onChange={(event) =>
-                      setForm({ ...form, pricingType: event.target.value })
-                    }
-                  >
-                    <option value="FIXED">Harga tetap</option>
-                    <option value="PER_ITEM">Per item</option>
-                  </select>
-                </label>
+                <SearchSelect
+                  label="TIPE HARGA"
+                  value={form.pricingType}
+                  options={[
+                    { value: "FIXED", label: "Harga tetap" },
+                    { value: "PER_ITEM", label: "Per item" },
+                  ]}
+                  onChange={(pricingType) =>
+                    setForm({ ...form, pricingType })
+                  }
+                />
                 <label>
                   <span className="label">HARGA</span>
                   <input

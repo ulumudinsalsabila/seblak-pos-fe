@@ -28,23 +28,25 @@ import { useBranding } from "./branding-provider";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { OutletAccess } from "@/lib/types";
+import type { Role } from "@/lib/types";
+import { SearchSelect } from "./form-controls";
 
 const nav = [
   {
     href: "/dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
-    owner: true,
+    roles: ["OWNER", "MANAGER"],
   },
-  { href: "/pos", label: "Kasir", icon: ShoppingBasket },
-  { href: "/kitchen", label: "Dapur", icon: ChefHat },
-  { href: "/transactions", label: "Transaksi", icon: ReceiptText },
-  { href: "/products", label: "Produk", icon: Boxes, owner: true },
-  { href: "/categories", label: "Kategori", icon: Tags, owner: true },
-  { href: "/expenses", label: "Pengeluaran", icon: WalletCards, owner: true },
-  { href: "/reports", label: "Laporan", icon: BarChart3, owner: true },
-  { href: "/users", label: "Pengguna", icon: Users, owner: true },
-  { href: "/settings", label: "Pengaturan", icon: Settings, owner: true },
+  { href: "/pos", label: "Kasir", icon: ShoppingBasket, roles: ["OWNER", "MANAGER", "CASHIER"] },
+  { href: "/kitchen", label: "Dapur", icon: ChefHat, roles: ["OWNER", "MANAGER", "KITCHEN"] },
+  { href: "/transactions", label: "Transaksi", icon: ReceiptText, roles: ["OWNER", "MANAGER", "CASHIER"] },
+  { href: "/products", label: "Produk", icon: Boxes, roles: ["OWNER", "MANAGER"] },
+  { href: "/categories", label: "Kategori", icon: Tags, roles: ["OWNER", "MANAGER"] },
+  { href: "/expenses", label: "Pengeluaran", icon: WalletCards, roles: ["OWNER", "MANAGER"] },
+  { href: "/reports", label: "Laporan", icon: BarChart3, roles: ["OWNER", "MANAGER"] },
+  { href: "/users", label: "Pengguna", icon: Users, roles: ["OWNER"] },
+  { href: "/settings", label: "Pengaturan", icon: Settings, roles: ["OWNER", "MANAGER"] },
 ];
 const superAdminNav = [
   { href: "/admin", label: "Kelola outlet", icon: Building2 },
@@ -61,10 +63,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   } | null>(null);
   const sidebarExpanded =
     sidebarOverride?.path === path ? sidebarOverride.expanded : path !== "/pos";
-  const canManage = user?.role === "OWNER" || user?.role === "MANAGER";
   const links = user?.role === "SUPER_ADMIN"
     ? superAdminNav
-    : nav.filter((item) => !item.owner || canManage);
+    : nav.filter((item) => item.roles.includes(user?.role as Exclude<Role, "SUPER_ADMIN">));
   const outlets = useQuery({
     queryKey: ["my-outlets", user?.id],
     queryFn: () => api<{ data: OutletAccess[] }>("/auth/outlets"),
@@ -98,7 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         >
           <Link href="/pos" className="flex items-center gap-3 font-black">
             <span
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#e7562c] bg-cover bg-center text-white"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--brand)] bg-contain bg-center bg-no-repeat text-white"
               style={
                 branding.logoUrl
                   ? { backgroundImage: `url(${branding.logoUrl})` }
@@ -130,7 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold transition",
                   !sidebarExpanded && "lg:justify-center lg:px-2",
                   active
-                    ? "bg-[#e7562c] text-white"
+                    ? "bg-[var(--brand)] text-white"
                     : "text-orange-50/65 hover:bg-white/10 hover:text-white",
                 )}
               >
@@ -196,21 +197,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <span className="ml-3 font-black">{branding.storeName} POS</span>
           {(outlets.data?.data.length ?? 0) > 1 && (
-            <select
-              aria-label="Pilih outlet"
-              className="ml-3 hidden max-w-52 rounded-xl border border-[#eadfd3] bg-white px-3 py-2 text-sm font-bold sm:block"
+            <SearchSelect
+              className="ml-3 hidden w-52 sm:block"
               value={user?.outletId ?? ""}
-              onChange={async (event) => {
-                await switchOutlet(event.target.value);
-                window.location.assign("/dashboard");
+              options={(outlets.data?.data ?? []).map(({ outlet }) => ({
+                value: outlet.id,
+                label: outlet.name,
+                description: outlet.code,
+              }))}
+              searchPlaceholder="Cari outlet..."
+              onChange={async (outletId) => {
+                await switchOutlet(outletId);
+                router.replace("/dashboard");
+                router.refresh();
               }}
-            >
-              {outlets.data?.data.map(({ outlet }) => (
-                <option key={outlet.id} value={outlet.id}>
-                  {outlet.name}
-                </option>
-              ))}
-            </select>
+            />
           )}
           <div className="ml-auto text-right">
             <p className="text-sm font-black">

@@ -52,7 +52,7 @@ export default function LoginPage() {
       <section className="hidden overflow-hidden bg-[#2d1c14] p-14 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="flex items-center gap-3 font-black">
           <span
-            className="grid h-12 w-12 place-items-center rounded-2xl bg-[#e7562c] bg-cover bg-center"
+            className="grid h-12 w-40 place-items-center rounded-2xl bg-white bg-contain bg-center bg-no-repeat"
             style={
               branding.logoUrl
                 ? { backgroundImage: `url(${branding.logoUrl})` }
@@ -65,27 +65,27 @@ export default function LoginPage() {
         </div>
         <div>
           <p className="mb-4 text-sm font-bold tracking-[.3em] text-orange-300">
-            PEDAS · CEPAT · RAPI
+            JUALAN · TUMBUH · TERUKUR
           </p>
           <h1 className="max-w-xl text-6xl font-black leading-[1.02]">
-            Kasir lancar,
+            Semua outlet,
             <br />
-            antrian bubar.
+            satu kendali.
           </h1>
           <p className="mt-6 max-w-lg text-lg leading-8 text-orange-100/75">
-            Semua penjualan, stok, dan laporan dalam satu layar yang dirancang
-            untuk ritme dapur.
+            Kelola penjualan, tim, transaksi, dan laporan setiap merchant
+            dalam satu platform yang siap berkembang.
           </p>
         </div>
         <p className="text-sm text-orange-100/45">
-          {branding.storeName} POS · Single Outlet
+          DagoraApp · Multi Outlet Commerce
         </p>
       </section>
       <section className="flex items-center justify-center p-6">
         <form onSubmit={submit} className="card w-full max-w-md p-8 sm:p-10">
           <div className="mb-8 lg:hidden">
             <span
-              className="inline-grid h-12 w-12 place-items-center rounded-2xl bg-[#e7562c] bg-cover bg-center text-white"
+              className="inline-grid h-12 w-40 place-items-center rounded-2xl bg-white bg-contain bg-center bg-no-repeat text-white"
               style={
                 branding.logoUrl
                   ? { backgroundImage: `url(${branding.logoUrl})` }
@@ -95,7 +95,7 @@ export default function LoginPage() {
               {!branding.logoUrl && <Flame />}
             </span>
           </div>
-          <p className="text-sm font-black tracking-[.2em] text-[#e7562c]">
+          <p className="text-sm font-black tracking-[.2em] text-[var(--brand)]">
             SELAMAT DATANG
           </p>
           <h2 className="mt-2 text-3xl font-black">Masuk ke kasir</h2>

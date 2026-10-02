@@ -14,6 +14,7 @@ import {
   PageHeader,
   StatusBadge,
 } from "@/components/ui";
+import { SearchSelect } from "@/components/form-controls";
 
 type TransactionListResponse = {
   data: Transaction[];
@@ -235,27 +236,27 @@ export default function TransactionsPage() {
           value={filters.invoiceNo}
           onChange={(event) => updateFilter("invoiceNo", event.target.value)}
         />
-        <select
-          className="field"
+        <SearchSelect
           value={filters.status}
-          onChange={(event) => updateFilter("status", event.target.value)}
-        >
-          <option value="">Semua status</option>
-          <option value="PAID">PAID</option>
-          <option value="VOID">VOID</option>
-        </select>
-        <select
-          className="field"
+          placeholder="Semua status"
+          clearable
+          options={[
+            { value: "PAID", label: "PAID" },
+            { value: "VOID", label: "VOID" },
+          ]}
+          onChange={(value) => updateFilter("status", value)}
+        />
+        <SearchSelect
           value={filters.paymentMethod}
-          onChange={(event) =>
-            updateFilter("paymentMethod", event.target.value)
-          }
-        >
-          <option value="">Semua pembayaran</option>
-          <option value="CASH">CASH</option>
-          <option value="QRIS">QRIS</option>
-          <option value="TRANSFER">TRANSFER</option>
-        </select>
+          placeholder="Semua pembayaran"
+          clearable
+          options={[
+            { value: "CASH", label: "CASH" },
+            { value: "QRIS", label: "QRIS" },
+            { value: "TRANSFER", label: "TRANSFER" },
+          ]}
+          onChange={(value) => updateFilter("paymentMethod", value)}
+        />
         <input
           aria-label="Dari tanggal"
           title="Dari tanggal"

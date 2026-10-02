@@ -3,8 +3,12 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
-  title: "Saung Sunja POS",
-  description: "Kasir cepat untuk Saung Sunja",
+  title: "DagoraApp",
+  description: "Platform kasir multi-outlet DagoraApp",
+  icons: {
+    icon: "/dagoraapp-favicon.png",
+    apple: "/dagoraapp-favicon.png",
+  },
 };
 export default function RootLayout({
   children,

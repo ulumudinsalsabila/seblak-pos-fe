@@ -6,8 +6,9 @@
   --cream: #fffaf3;
   --paper: #fff;
   --line: #eadfd3;
-  --brand: #e7562c;
-  --brand-dark: #bd3519;
+  --brand: #0b63f6;
+  --brand-dark: #084dbf;
+  --brand-rgb: 11, 99, 246;
   --leaf: #477a52;
 }
 * {
@@ -59,7 +60,7 @@ button {
 }
 .field:focus {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(231, 86, 44, 0.12);
+  box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.14);
 }
 .field.field-with-icon {
   padding-left: 3rem;
@@ -110,6 +111,22 @@ label:has(> .field) > .label {
   color: var(--ink);
   font-weight: 700;
   padding: 0.72rem 1rem;
+}
+/* Compatibility layer for existing POS screens while outlet branding is dynamic. */
+.text-\[\#e7562c\] {
+  color: var(--brand) !important;
+}
+.bg-\[\#e7562c\] {
+  background-color: var(--brand) !important;
+}
+.border-\[\#e7562c\] {
+  border-color: var(--brand) !important;
+}
+.hover\:bg-\[\#bd3519\]:hover {
+  background-color: var(--brand-dark) !important;
+}
+.group:hover .group-hover\:text-\[\#e7562c\] {
+  color: var(--brand) !important;
 }
 .badge {
   display: inline-flex;

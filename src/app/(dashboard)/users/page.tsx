@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, X } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Role, User } from "@/lib/types";
 import {
@@ -12,6 +12,7 @@ import {
   PageHeader,
   StatusBadge,
 } from "@/components/ui";
+import { SearchSelect } from "@/components/form-controls";
 
 type UserForm = {
   name: string;
@@ -66,6 +67,11 @@ export default function UsersPage() {
           status: user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE",
         }),
       }),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ["users"] }),
+  });
+  const remove = useMutation({
+    mutationFn: (user: User) =>
+      api(`/users/${user.id}`, { method: "DELETE" }),
     onSuccess: () => void client.invalidateQueries({ queryKey: ["users"] }),
   });
 
@@ -154,12 +160,25 @@ export default function UsersPage() {
                 >
                   {user.status === "ACTIVE" ? "Nonaktifkan" : "Aktifkan"}
                 </button>
+                <button
+                  type="button"
+                  title="Hapus akses pengguna"
+                  className="btn-ghost text-red-600"
+                  disabled={remove.isPending}
+                  onClick={() => {
+                    if (window.confirm(`Hapus akses ${user.name ?? user.email}?`))
+                      remove.mutate(user);
+                  }}
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
             </div>
           ))}
         </div>
         {!query.data?.data.length && <Empty>Belum ada pengguna.</Empty>}
       </section>
+      {remove.error && <div className="mt-4"><ErrorNotice error={remove.error} /></div>}
 
       {dialogOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center p-4">
@@ -242,21 +261,17 @@ export default function UsersPage() {
                   }
                 />
               </label>
-              <label>
-                <span className="label">ROLE</span>
-                <select
-                  className="field"
-                  value={form.role}
-                  onChange={(event) =>
-                    setForm({ ...form, role: event.target.value as Role })
-                  }
-                >
-                  <option value="CASHIER">CASHIER</option>
-                  <option value="KITCHEN">KITCHEN</option>
-                  <option value="MANAGER">MANAGER</option>
-                  <option value="OWNER">OWNER</option>
-                </select>
-              </label>
+              <SearchSelect
+                label="ROLE"
+                value={form.role}
+                options={[
+                  { value: "CASHIER", label: "Kasir" },
+                  { value: "KITCHEN", label: "Dapur" },
+                  { value: "MANAGER", label: "Manager" },
+                  { value: "OWNER", label: "Owner" },
+                ]}
+                onChange={(role) => setForm({ ...form, role: role as Role })}
+              />
 
               {save.error && <ErrorNotice error={save.error} />}
 

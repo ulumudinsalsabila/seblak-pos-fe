@@ -12,9 +12,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
   return (
     <QueryClientProvider client={client}>
-      <BrandingProvider>
-        <AuthProvider>{children}</AuthProvider>
-      </BrandingProvider>
+      <AuthProvider>
+        <BrandingProvider>{children}</BrandingProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

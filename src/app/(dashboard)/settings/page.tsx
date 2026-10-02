@@ -1,10 +1,11 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Settings } from "@/lib/types";
 import { ErrorNotice, Loading, PageHeader } from "@/components/ui";
+import { SearchSelect } from "@/components/form-controls";
 export default function SettingsPage() {
   const client = useQueryClient();
   const query = useQuery({
@@ -21,6 +22,7 @@ export default function SettingsPage() {
           storeName: form?.storeName,
           logoUrl: form?.logoUrl || null,
           faviconUrl: form?.faviconUrl || null,
+          primaryColor: form?.primaryColor,
           phone: form?.phone,
           address: form?.address,
           currency: form?.currency,
@@ -113,6 +115,7 @@ export default function SettingsPage() {
               ] as const
             ).map(([field, label, help]) => {
               const imageUrl = form[field];
+              const previewUrl = imageUrl || "/dagoraapp-logo.png";
               return (
                 <div
                   key={field}
@@ -123,12 +126,9 @@ export default function SettingsPage() {
                     <div
                       className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl border border-[#eadfd3] bg-white bg-contain bg-center bg-no-repeat text-[#b9a99c]"
                       style={
-                        imageUrl
-                          ? { backgroundImage: `url(${imageUrl})` }
-                          : undefined
+                        { backgroundImage: `url(${previewUrl})` }
                       }
                     >
-                      {!imageUrl && <ImagePlus size={28} />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="mb-2 text-xs text-[#796c63]">
@@ -170,6 +170,32 @@ export default function SettingsPage() {
           </div>
         </section>
         <hr className="border-[#eadfd3]" />
+        <label>
+          <span className="label">WARNA PRIMARY OUTLET</span>
+          <div className="flex items-center gap-3">
+            <input
+              aria-label="Pilih warna primary outlet"
+              className="h-12 w-16 rounded-xl border border-[#eadfd3] bg-white p-1"
+              type="color"
+              value={form.primaryColor || "#0B63F6"}
+              onChange={(event) =>
+                setForm({ ...form, primaryColor: event.target.value.toUpperCase() })
+              }
+            />
+            <input
+              className="field"
+              pattern="#[0-9A-Fa-f]{6}"
+              value={form.primaryColor || "#0B63F6"}
+              onChange={(event) =>
+                setForm({ ...form, primaryColor: event.target.value })
+              }
+            />
+          </div>
+          <span className="mt-1 text-xs text-[#796c63]">
+            Warna tombol, navigasi aktif, dan aksen aplikasi merchant.
+          </span>
+        </label>
+        <hr className="border-[#eadfd3]" />
         <div className="grid gap-4 sm:grid-cols-2">
           <label>
             <span className="label">NAMA TOKO</span>
@@ -205,23 +231,20 @@ export default function SettingsPage() {
               onChange={(e) => setForm({ ...form, currency: e.target.value })}
             />
           </label>
-          <label>
-            <span className="label">UKURAN STRUK</span>
-            <select
-              className="field"
-              value={form.receiptPaperSize}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  receiptPaperSize: e.target
-                    .value as Settings["receiptPaperSize"],
-                })
-              }
-            >
-              <option value="MM58">58 MM</option>
-              <option value="MM80">80 MM</option>
-            </select>
-          </label>
+          <SearchSelect
+            label="UKURAN STRUK"
+            value={form.receiptPaperSize}
+            options={[
+              { value: "MM58", label: "58 MM" },
+              { value: "MM80", label: "80 MM" },
+            ]}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                receiptPaperSize: value as Settings["receiptPaperSize"],
+              })
+            }
+          />
           <label>
             <span className="label">PAJAK (%)</span>
             <input
