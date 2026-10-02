@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
+  Building2,
   Boxes,
   ChevronRight,
   ChefHat,
@@ -24,6 +25,9 @@ import { useState } from "react";
 import { clsx } from "clsx";
 import { useAuth } from "./auth-provider";
 import { useBranding } from "./branding-provider";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import type { OutletAccess } from "@/lib/types";
 
 const nav = [
   {
@@ -42,8 +46,11 @@ const nav = [
   { href: "/users", label: "Pengguna", icon: Users, owner: true },
   { href: "/settings", label: "Pengaturan", icon: Settings, owner: true },
 ];
+const superAdminNav = [
+  { href: "/admin", label: "Kelola outlet", icon: Building2 },
+];
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, logout, switchOutlet } = useAuth();
   const branding = useBranding();
   const path = usePathname();
   const router = useRouter();
@@ -54,7 +61,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   } | null>(null);
   const sidebarExpanded =
     sidebarOverride?.path === path ? sidebarOverride.expanded : path !== "/pos";
-  const links = nav.filter((item) => !item.owner || user?.role === "OWNER");
+  const canManage = user?.role === "OWNER" || user?.role === "MANAGER";
+  const links = user?.role === "SUPER_ADMIN"
+    ? superAdminNav
+    : nav.filter((item) => !item.owner || canManage);
+  const outlets = useQuery({
+    queryKey: ["my-outlets", user?.id],
+    queryFn: () => api<{ data: OutletAccess[] }>("/auth/outlets"),
+    enabled: Boolean(user && user.role !== "SUPER_ADMIN"),
+  });
   async function signOut() {
     await logout();
     router.replace("/login");
@@ -180,12 +195,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {sidebarExpanded ? <PanelLeftClose /> : <PanelLeftOpen />}
           </button>
           <span className="ml-3 font-black">{branding.storeName} POS</span>
+          {(outlets.data?.data.length ?? 0) > 1 && (
+            <select
+              aria-label="Pilih outlet"
+              className="ml-3 hidden max-w-52 rounded-xl border border-[#eadfd3] bg-white px-3 py-2 text-sm font-bold sm:block"
+              value={user?.outletId ?? ""}
+              onChange={async (event) => {
+                await switchOutlet(event.target.value);
+                window.location.assign("/dashboard");
+              }}
+            >
+              {outlets.data?.data.map(({ outlet }) => (
+                <option key={outlet.id} value={outlet.id}>
+                  {outlet.name}
+                </option>
+              ))}
+            </select>
+          )}
           <div className="ml-auto text-right">
             <p className="text-sm font-black">
-              {user?.role === "OWNER" ? "Owner" : "Kasir"}
+              {user?.role.replaceAll("_", " ")}
             </p>
             <p className="hidden text-xs text-[#796c63] sm:block">
-              {user?.email}
+              {user?.outletName ?? user?.email}
             </p>
           </div>
         </header>

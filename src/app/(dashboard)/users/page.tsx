@@ -107,7 +107,7 @@ export default function UsersPage() {
     <>
       <PageHeader
         title="Pengguna"
-        description="Kelola akun Owner dan Cashier."
+        description="Kelola tim dan akses mereka di outlet aktif."
         action={
           <button
             type="button"
@@ -183,7 +183,7 @@ export default function UsersPage() {
                 <p className="mt-1 text-sm text-[#796c63]">
                   {editingUser
                     ? "Perbarui informasi akun yang dipilih."
-                    : "Tambahkan akun Owner atau Cashier."}
+                    : "Tambahkan akun untuk outlet aktif."}
                 </p>
               </div>
               <button
@@ -252,6 +252,8 @@ export default function UsersPage() {
                   }
                 >
                   <option value="CASHIER">CASHIER</option>
+                  <option value="KITCHEN">KITCHEN</option>
+                  <option value="MANAGER">MANAGER</option>
                   <option value="OWNER">OWNER</option>
                 </select>
               </label>

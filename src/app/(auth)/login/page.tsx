@@ -16,7 +16,15 @@ export default function LoginPage() {
   const [pending, setPending] = useState(false);
   useEffect(() => {
     if (!loading && user)
-      router.replace(user.role === "OWNER" ? "/dashboard" : "/pos");
+      router.replace(
+        user.role === "SUPER_ADMIN"
+          ? "/admin"
+          : user.role === "OWNER" || user.role === "MANAGER"
+            ? "/dashboard"
+            : user.role === "KITCHEN"
+              ? "/kitchen"
+              : "/pos",
+      );
   }, [loading, user, router]);
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -24,7 +32,15 @@ export default function LoginPage() {
     setError(undefined);
     try {
       const signedIn = await login(email, password);
-      router.replace(signedIn.role === "OWNER" ? "/dashboard" : "/pos");
+      router.replace(
+        signedIn.role === "SUPER_ADMIN"
+          ? "/admin"
+          : signedIn.role === "OWNER" || signedIn.role === "MANAGER"
+            ? "/dashboard"
+            : signedIn.role === "KITCHEN"
+              ? "/kitchen"
+              : "/pos",
+      );
     } catch (e) {
       setError(e);
     } finally {

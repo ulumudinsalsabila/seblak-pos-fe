@@ -14,6 +14,7 @@ type AuthContextValue = {
   user: User | null;
   loading: boolean;
   login(email: string, password: string): Promise<User>;
+  switchOutlet(outletId: string): Promise<User>;
   logout(): Promise<void>;
 };
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -79,6 +80,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setAccessToken(null);
           setUser(null);
         }
+      },
+      async switchOutlet(outletId) {
+        const result = await api<{
+          data: { accessToken: string; expiresIn: number };
+        }>("/auth/switch-outlet", {
+          method: "POST",
+          body: JSON.stringify({ outletId }),
+        });
+        setAccessToken(result.data.accessToken);
+        scheduleRefresh(result.data.expiresIn);
+        const me = await api<{ data: User }>("/auth/me");
+        setUser(me.data);
+        return me.data;
       },
     }),
     [user, loading, scheduleRefresh],

@@ -1,10 +1,18 @@
-export type Role = "OWNER" | "CASHIER";
+export type Role = "SUPER_ADMIN" | "OWNER" | "MANAGER" | "CASHIER" | "KITCHEN";
 export type User = {
   id: string;
   name?: string;
   email: string;
   role: Role;
   status?: "ACTIVE" | "INACTIVE";
+  tenantId?: string | null;
+  outletId?: string | null;
+  outletName?: string | null;
+};
+export type OutletAccess = {
+  role: Role;
+  isDefault: boolean;
+  outlet: { id: string; name: string; code: string; tenantId: string };
 };
 export type Category = {
   id: string;
