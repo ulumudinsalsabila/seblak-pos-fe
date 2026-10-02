@@ -16,7 +16,7 @@ import {
 import { api } from "@/lib/api";
 import { rupiah } from "@/lib/format";
 import type { Category, Product, Settings, Transaction } from "@/lib/types";
-import { Receipt } from "@/components/receipt";
+import { KitchenReceipt, Receipt } from "@/components/receipt";
 import { ErrorNotice, Loading } from "@/components/ui";
 
 type CartLine = { product: Product; quantity: number };
@@ -65,6 +65,9 @@ export default function PosPage() {
   const [payment, setPayment] = useState<"CASH" | "QRIS" | "TRANSFER">("CASH");
   const [received, setReceived] = useState(0);
   const [result, setResult] = useState<Transaction | null>(null);
+  const [receiptMode, setReceiptMode] = useState<"customer" | "kitchen">(
+    "customer",
+  );
   const transactionId = useRef<string | null>(null);
   const mutation = useMutation({
     mutationFn: (payload: unknown) =>
@@ -73,6 +76,7 @@ export default function PosPage() {
         body: JSON.stringify(payload),
       }),
     onSuccess: (data) => {
+      setReceiptMode("customer");
       setResult(data.data);
       void client.invalidateQueries();
     },
@@ -160,8 +164,13 @@ export default function PosPage() {
     setDiscount(0);
     setReceived(0);
     setResult(null);
+    setReceiptMode("customer");
     transactionId.current = null;
     mutation.reset();
+  }
+  function printResult(mode: "customer" | "kitchen") {
+    setReceiptMode(mode);
+    window.setTimeout(() => window.print(), 0);
   }
   if (products.isLoading || categories.isLoading || settings.isLoading)
     return <Loading />;
@@ -781,26 +790,58 @@ export default function PosPage() {
                   <X size={20} />
                 </button>
               </div>
-              <div className="min-h-0 flex-1 overflow-y-auto p-5">
-                <Receipt transaction={result} />
+              <div className="grid shrink-0 grid-cols-2 gap-2 border-b border-[#eadfd3] bg-white px-5 py-3">
+                <button
+                  type="button"
+                  className={receiptMode === "customer" ? "btn-primary" : "btn-ghost"}
+                  onClick={() => setReceiptMode("customer")}
+                >
+                  Nota customer
+                </button>
+                <button
+                  type="button"
+                  className={receiptMode === "kitchen" ? "btn-primary" : "btn-ghost"}
+                  onClick={() => setReceiptMode("kitchen")}
+                >
+                  Nota dapur
+                </button>
               </div>
-              <div className="grid shrink-0 grid-cols-2 gap-3 border-t border-[#eadfd3] bg-white p-5">
-                <button type="button" className="btn-ghost" onClick={reset}>
+              <div className="min-h-0 flex-1 overflow-y-auto p-5">
+                {receiptMode === "customer" ? (
+                  <Receipt transaction={result} />
+                ) : (
+                  <KitchenReceipt transaction={result} />
+                )}
+              </div>
+              <div className="grid shrink-0 grid-cols-2 gap-3 border-t border-[#eadfd3] bg-white p-5 sm:grid-cols-3">
+                <button type="button" className="btn-ghost col-span-2 sm:col-span-1" onClick={reset}>
                   Transaksi baru
                 </button>
                 <button
                   type="button"
-                  className="btn-primary flex items-center justify-center gap-2"
-                  onClick={() => window.print()}
+                  className="btn-primary flex items-center justify-center gap-2 !bg-[#2b1c15]"
+                  onClick={() => printResult("kitchen")}
                 >
                   <Printer size={18} />
-                  Print nota
+                  Print dapur
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary flex items-center justify-center gap-2"
+                  onClick={() => printResult("customer")}
+                >
+                  <Printer size={18} />
+                  Print customer
                 </button>
               </div>
             </aside>
           </div>
           <div className="print-only">
-            <Receipt transaction={result} />
+            {receiptMode === "customer" ? (
+              <Receipt transaction={result} />
+            ) : (
+              <KitchenReceipt transaction={result} />
+            )}
           </div>
         </>
       )}

@@ -94,3 +94,71 @@ export function Receipt({ transaction }: { transaction: Transaction }) {
     </div>
   );
 }
+
+export function KitchenReceipt({ transaction }: { transaction: Transaction }) {
+  const width =
+    transaction.receiptPaperSize === "MM80" ? "max-w-[80mm]" : "max-w-[58mm]";
+  const orderType =
+    transaction.orderType === "TAKEAWAY" ? "BUNGKUS" : "MAKAN DI TEMPAT";
+  const broth = { LITTLE: "Sedikit", MEDIUM: "Sedang", MUCH: "Banyak" }[
+    transaction.brothLevel
+  ];
+  const taste = { SALTY: "Asin", SAVORY: "Gurih", SWEET: "Manis" }[
+    transaction.tastePreference
+  ];
+
+  return (
+    <div
+      className={`receipt-print card mx-auto ${width} p-5 font-mono text-xs leading-5 text-black`}
+    >
+      <div className="text-center">
+        <h2 className="text-lg font-black">PESANAN DAPUR</h2>
+        <p className="text-[10px]">{transaction.storeName}</p>
+      </div>
+
+      <div className="my-3 border-y border-dashed border-black py-2">
+        <p className="text-sm font-black">{transaction.invoiceNo}</p>
+        <p>{dateTime(transaction.paidAt)}</p>
+        <p className="mt-1 text-base font-black">{transaction.customerName}</p>
+        <p className="mt-2 border-2 border-black p-2 text-center text-sm font-black">
+          {orderType}
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {transaction.items.map((item) => (
+          <div className="flex gap-3 text-base leading-5" key={item.id}>
+            <b className="min-w-8 text-lg">{item.quantity}×</b>
+            <span className="font-bold">{item.productName}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="my-3 space-y-1 border-y border-dashed border-black py-2">
+        <div className="flex justify-between">
+          <span>Level pedas</span>
+          <b>{transaction.spicyLevel}</b>
+        </div>
+        <div className="flex justify-between">
+          <span>Kuah</span>
+          <b>{broth}</b>
+        </div>
+        <div className="flex justify-between">
+          <span>Rasa</span>
+          <b>{taste}</b>
+        </div>
+        {transaction.notes && (
+          <p className="mt-2 border border-black p-2 font-black">
+            CATATAN: {transaction.notes}
+          </p>
+        )}
+      </div>
+
+      {transaction.status === "VOID" && (
+        <p className="mt-3 border-2 border-black p-2 text-center text-base font-black">
+          VOID — {transaction.voidReason}
+        </p>
+      )}
+    </div>
+  );
+}

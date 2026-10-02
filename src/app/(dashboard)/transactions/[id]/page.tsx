@@ -5,7 +5,7 @@ import { Printer } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Transaction } from "@/lib/types";
 import { useAuth } from "@/components/auth-provider";
-import { Receipt } from "@/components/receipt";
+import { KitchenReceipt, Receipt } from "@/components/receipt";
 import { ErrorNotice, Loading, PageHeader, StatusBadge } from "@/components/ui";
 export default function TransactionDetail({
   params,
@@ -16,6 +16,9 @@ export default function TransactionDetail({
   const { user } = useAuth();
   const client = useQueryClient();
   const [reason, setReason] = useState("");
+  const [receiptMode, setReceiptMode] = useState<"customer" | "kitchen">(
+    "customer",
+  );
   const query = useQuery({
     queryKey: ["transaction", id],
     queryFn: () => api<{ data: Transaction }>(`/transactions/${id}`),
@@ -31,6 +34,10 @@ export default function TransactionDetail({
       void client.invalidateQueries({ queryKey: ["transactions"] });
     },
   });
+  function printReceipt(mode: "customer" | "kitchen") {
+    setReceiptMode(mode);
+    window.setTimeout(() => window.print(), 0);
+  }
   if (query.isLoading) return <Loading />;
   if (query.error) return <ErrorNotice error={query.error} />;
   const transaction = query.data!.data;
@@ -41,13 +48,22 @@ export default function TransactionDetail({
           title={transaction.invoiceNo}
           description="Detail transaksi dan receipt snapshot."
           action={
-            <button
-              className="btn-primary flex items-center gap-2"
-              onClick={() => window.print()}
-            >
-              <Printer size={18} />
-              Cetak struk
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="btn-primary flex items-center gap-2 !bg-[#2b1c15]"
+                onClick={() => printReceipt("kitchen")}
+              >
+                <Printer size={18} />
+                Print dapur
+              </button>
+              <button
+                className="btn-primary flex items-center gap-2"
+                onClick={() => printReceipt("customer")}
+              >
+                <Printer size={18} />
+                Print customer
+              </button>
+            </div>
           }
         />
         <div className="mb-6 flex items-center gap-3">
@@ -81,8 +97,35 @@ export default function TransactionDetail({
             )}
           </div>
         )}
+        <div className="mx-auto mb-4 grid max-w-[80mm] grid-cols-2 gap-2 rounded-2xl border border-[#eadfd3] bg-white p-2">
+          <button
+            type="button"
+            className={receiptMode === "customer" ? "btn-primary" : "btn-ghost"}
+            onClick={() => setReceiptMode("customer")}
+          >
+            Nota customer
+          </button>
+          <button
+            type="button"
+            className={receiptMode === "kitchen" ? "btn-primary" : "btn-ghost"}
+            onClick={() => setReceiptMode("kitchen")}
+          >
+            Nota dapur
+          </button>
+        </div>
+        {receiptMode === "customer" ? (
+          <Receipt transaction={transaction} />
+        ) : (
+          <KitchenReceipt transaction={transaction} />
+        )}
       </div>
-      <Receipt transaction={transaction} />
+      <div className="print-only">
+        {receiptMode === "customer" ? (
+          <Receipt transaction={transaction} />
+        ) : (
+          <KitchenReceipt transaction={transaction} />
+        )}
+      </div>
     </>
   );
 }
