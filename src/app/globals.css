@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #241c17;
-  --muted: #796c63;
-  --cream: #fffaf3;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --cream: #f8fafc;
   --paper: #fff;
-  --line: #eadfd3;
-  --brand: #0b63f6;
-  --brand-dark: #084dbf;
-  --brand-rgb: 11, 99, 246;
+  --line: #e2e8f0;
+  --brand: #4f46e5;
+  --brand-dark: #4338ca;
+  --brand-rgb: 79, 70, 229;
   --leaf: #477a52;
 }
 * {
@@ -22,7 +22,7 @@ body {
   background:
     radial-gradient(
       circle at 12% 8%,
-      rgba(244, 168, 74, 0.12),
+      rgba(99, 102, 241, 0.12),
       transparent 24rem
     ),
     var(--cream);
@@ -39,13 +39,13 @@ button {
   cursor: pointer;
 }
 ::selection {
-  background: #ffd4bf;
+  background: #c7d2fe;
 }
 .card {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--line);
   border-radius: 1.25rem;
-  box-shadow: 0 12px 30px rgba(75, 47, 31, 0.055);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.055);
 }
 .field {
   display: block;
@@ -127,6 +127,52 @@ label:has(> .field) > .label {
 }
 .group:hover .group-hover\:text-\[\#e7562c\] {
   color: var(--brand) !important;
+}
+/* Keep legacy warm accent utilities aligned with the indigo brand palette. */
+.text-\[\#d94722\],
+.text-\[\#f04e2a\] {
+  color: var(--brand-dark) !important;
+}
+.bg-\[\#f04e2a\] {
+  background-color: var(--brand) !important;
+}
+.border-\[\#f1a080\] {
+  border-color: #a5b4fc !important;
+}
+.bg-\[\#fff0e8\],
+.bg-\[\#fff1e9\],
+.bg-\[\#fff3ec\] {
+  background-color: #eef2ff !important;
+}
+.from-\[\#fff0e8\] {
+  --tw-gradient-from: #eef2ff var(--tw-gradient-from-position) !important;
+}
+.to-\[\#f7d7bd\] {
+  --tw-gradient-to: #c7d2fe var(--tw-gradient-to-position) !important;
+}
+.bg-\[\#2b1c15\] {
+  background-color: #0f172a !important;
+}
+.text-\[\#241c17\] {
+  color: var(--ink) !important;
+}
+.text-\[\#796c63\],
+.text-\[\#6f6259\],
+.text-\[\#493a31\],
+.text-\[\#9b8a7d\],
+.text-\[\#9b8d83\] {
+  color: var(--muted) !important;
+}
+.border-\[\#eadfd3\],
+.border-\[\#eee3d9\],
+.border-\[\#f1e8df\] {
+  border-color: var(--line) !important;
+}
+.bg-\[\#fffdfa\],
+.bg-\[\#fff8f1\],
+.bg-\[\#fff7ef\],
+.bg-\[\#fffaf5\] {
+  background-color: #f8fafc !important;
 }
 .badge {
   display: inline-flex;

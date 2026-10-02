@@ -166,7 +166,7 @@ export default function KitchenPage() {
     <div className="min-h-[calc(100vh-7.5rem)]">
       <header className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="rounded-2xl bg-[#2b1c15] p-3 text-orange-300 shadow-lg">
+          <span className="rounded-2xl bg-[#2b1c15] p-3 text-indigo-300 shadow-lg">
             <ChefHat size={28} />
           </span>
           <div>
@@ -212,7 +212,7 @@ export default function KitchenPage() {
           className={clsx(
             "rounded-2xl border p-4 text-left transition",
             tab === "PENDING"
-              ? "border-[#e7562c] bg-[#e7562c] text-white shadow-lg shadow-orange-900/10"
+              ? "border-[#e7562c] bg-[#e7562c] text-white shadow-lg shadow-indigo-900/10"
               : "border-[#eadfd3] bg-white",
           )}
         >
@@ -272,7 +272,7 @@ export default function KitchenPage() {
                 className={clsx(
                   "overflow-hidden rounded-2xl border bg-white shadow-[0_12px_30px_rgba(75,47,31,.07)]",
                   isNew
-                    ? "border-[#e7562c] ring-2 ring-orange-100"
+                    ? "border-[#e7562c] ring-2 ring-indigo-100"
                     : "border-[#eadfd3]",
                 )}
               >
@@ -315,7 +315,7 @@ export default function KitchenPage() {
                           ? "bg-red-100 text-red-700"
                           : minutes >= 10
                             ? "bg-amber-100 text-amber-700"
-                            : "bg-orange-100 text-orange-700",
+                            : "bg-indigo-100 text-indigo-700",
                     )}
                   >
                     <Clock3 size={13} />
@@ -408,7 +408,7 @@ export default function KitchenPage() {
                     <span>Rasa: {tasteLabels[order.tastePreference]}</span>
                   </div>}
                   {order.notes && (
-                    <p className="mt-2 border-t border-orange-200 pt-2 font-black text-[#b23b1f]">
+                    <p className="mt-2 border-t border-indigo-200 pt-2 font-black text-indigo-700">
                       Catatan: {order.notes}
                     </p>
                   )}

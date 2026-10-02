@@ -302,7 +302,7 @@ export default function TransactionsPage() {
               {items.map((item) => (
                 <tr
                   key={item.id}
-                  className="border-b border-[#f1e8df] hover:bg-orange-50/40"
+                  className="border-b border-[#f1e8df] hover:bg-indigo-50/40"
                 >
                   <td className="p-4">
                     <Link

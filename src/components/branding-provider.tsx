@@ -10,7 +10,7 @@ const fallbackBranding: Branding = {
   storeName: "DagoraApp",
   logoUrl: "/dagoraapp-logo.png",
   faviconUrl: "/dagoraapp-favicon.png",
-  primaryColor: "#0B63F6",
+  primaryColor: "#4F46E5",
 };
 const BrandingContext = createContext<Branding>(fallbackBranding);
 

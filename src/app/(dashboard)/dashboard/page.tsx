@@ -45,7 +45,7 @@ export default function DashboardPage() {
       label: "Omzet terkumpul",
       value: rupiah(data.summary.collected),
       icon: CircleDollarSign,
-      color: "bg-orange-100 text-orange-700",
+      color: "bg-indigo-100 text-indigo-700",
     },
     {
       label: "Transaksi",

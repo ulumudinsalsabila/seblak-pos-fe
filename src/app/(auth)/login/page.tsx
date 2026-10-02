@@ -49,7 +49,8 @@ export default function LoginPage() {
   }
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.1fr_.9fr]">
-      <section className="hidden overflow-hidden bg-[#2d1c14] p-14 text-white lg:flex lg:flex-col lg:justify-between">
+      <section className="relative hidden overflow-hidden bg-[#0f172a] p-14 text-white lg:flex lg:flex-col lg:justify-between">
+        <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
         <div className="flex items-center gap-3 font-black">
           <span
             className="grid h-12 w-40 place-items-center rounded-2xl bg-white bg-contain bg-center bg-no-repeat"
@@ -64,7 +65,7 @@ export default function LoginPage() {
           {branding.storeName}
         </div>
         <div>
-          <p className="mb-4 text-sm font-bold tracking-[.3em] text-orange-300">
+          <p className="mb-4 text-sm font-bold tracking-[.3em] text-indigo-300">
             JUALAN · TUMBUH · TERUKUR
           </p>
           <h1 className="max-w-xl text-6xl font-black leading-[1.02]">
@@ -72,12 +73,12 @@ export default function LoginPage() {
             <br />
             satu kendali.
           </h1>
-          <p className="mt-6 max-w-lg text-lg leading-8 text-orange-100/75">
+          <p className="mt-6 max-w-lg text-lg leading-8 text-slate-300">
             Kelola penjualan, tim, transaksi, dan laporan setiap merchant
             dalam satu platform yang siap berkembang.
           </p>
         </div>
-        <p className="text-sm text-orange-100/45">
+        <p className="text-sm text-slate-400">
           DagoraApp · Multi Outlet Commerce
         </p>
       </section>

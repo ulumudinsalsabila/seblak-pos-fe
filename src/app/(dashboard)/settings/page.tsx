@@ -177,7 +177,7 @@ export default function SettingsPage() {
               aria-label="Pilih warna primary outlet"
               className="h-12 w-16 rounded-xl border border-[#eadfd3] bg-white p-1"
               type="color"
-              value={form.primaryColor || "#0B63F6"}
+              value={form.primaryColor || "#4F46E5"}
               onChange={(event) =>
                 setForm({ ...form, primaryColor: event.target.value.toUpperCase() })
               }
@@ -185,7 +185,7 @@ export default function SettingsPage() {
             <input
               className="field"
               pattern="#[0-9A-Fa-f]{6}"
-              value={form.primaryColor || "#0B63F6"}
+              value={form.primaryColor || "#4F46E5"}
               onChange={(event) =>
                 setForm({ ...form, primaryColor: event.target.value })
               }

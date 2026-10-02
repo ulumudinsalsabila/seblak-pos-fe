@@ -305,7 +305,7 @@ export default function ProductsPage() {
               {items.map((item) => (
                 <tr
                   key={item.id}
-                  className="border-t border-[#f1e8df] hover:bg-orange-50/40"
+                  className="border-t border-[#f1e8df] hover:bg-indigo-50/40"
                 >
                   <td className="p-4">
                     <b>{item.name}</b>

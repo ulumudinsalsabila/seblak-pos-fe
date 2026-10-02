@@ -88,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     >
       <aside
         className={clsx(
-          "no-print fixed inset-y-0 left-0 z-40 w-[270px] bg-[#2b1c15] p-5 text-white transition-all duration-300 lg:sticky lg:top-0 lg:h-screen lg:w-auto lg:translate-x-0",
+          "no-print fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0f172a] p-5 text-white shadow-2xl shadow-slate-950/20 transition-all duration-300 lg:sticky lg:top-0 lg:h-screen lg:w-auto lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           sidebarExpanded ? "lg:p-5" : "lg:p-4",
         )}
@@ -134,7 +134,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   !sidebarExpanded && "lg:justify-center lg:px-2",
                   active
                     ? "bg-[var(--brand)] text-white"
-                    : "text-orange-50/65 hover:bg-white/10 hover:text-white",
+                    : "text-slate-300 hover:bg-white/10 hover:text-white",
                 )}
               >
                 <Icon size={19} />
@@ -156,13 +156,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         >
           <div className={clsx(!sidebarExpanded && "lg:hidden")}>
             <p className="truncate text-sm font-bold">{user?.email}</p>
-            <p className="mt-1 text-xs text-orange-200/55">{user?.role}</p>
+            <p className="mt-1 text-xs text-slate-400">{user?.role}</p>
           </div>
           <button
             onClick={signOut}
             title="Keluar"
             className={clsx(
-              "flex items-center gap-2 text-xs font-bold text-orange-200 hover:text-white",
+              "flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-white",
               sidebarExpanded ? "mt-3" : "lg:mx-auto",
             )}
           >
@@ -181,7 +181,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
       )}
       <div className="min-w-0">
-        <header className="no-print sticky top-0 z-20 flex h-16 items-center border-b border-[#eadfd3] bg-[#fffaf3]/90 px-4 backdrop-blur sm:px-6">
+        <header className="no-print sticky top-0 z-20 flex h-16 items-center border-b border-slate-200 bg-slate-50/90 px-4 backdrop-blur sm:px-6">
           <button
             onClick={() => setMobileOpen(true)}
             className="rounded-xl border border-[#eadfd3] bg-white p-2 lg:hidden"
