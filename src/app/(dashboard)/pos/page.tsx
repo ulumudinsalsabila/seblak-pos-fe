@@ -246,11 +246,10 @@ export default function PosPage() {
                 (line) => line.product.id === product.id,
               )?.quantity ?? 0;
               return (
-              <button
+              <article
                 key={product.id}
                 onClick={() => add(product)}
-                disabled={product.trackStock && (product.stock ?? 0) < 1}
-                className="card group overflow-hidden p-3 text-left transition hover:-translate-y-1 hover:border-[#f1a080] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                className={`card group cursor-pointer overflow-hidden p-3 text-left transition hover:-translate-y-1 hover:border-[#f1a080] hover:shadow-lg ${product.trackStock && (product.stock ?? 0) < 1 ? "pointer-events-none opacity-50" : ""}`}
               >
                 <div
                   className="relative grid aspect-[4/3] place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-[#fff0e8] to-[#f7d7bd] bg-cover bg-center"
@@ -264,11 +263,6 @@ export default function PosPage() {
                 >
                   {!product.imageUrl && (
                     <UtensilsCrossed size={42} className="text-[#e7562c]/45" />
-                  )}
-                  {cartQuantity > 0 && (
-                    <span className="absolute left-2 top-2 rounded-full bg-[#f04e2a] px-2.5 py-1 text-[11px] font-black text-white shadow-md">
-                      {cartQuantity} di keranjang
-                    </span>
                   )}
                   {product.trackStock && (
                     <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-[#796c63] shadow-sm">
@@ -286,11 +280,17 @@ export default function PosPage() {
                   <p className="text-sm font-black text-[#e7562c]">
                     {rupiah(product.price)}
                   </p>
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#f04e2a] text-white shadow-sm transition group-hover:scale-105">
-                    <Plus size={22} />
-                  </span>
+                  {cartQuantity > 0 ? (
+                    <span className="flex shrink-0 items-center rounded-full bg-[#f04e2a] p-1 text-white shadow-sm" onClick={(event) => event.stopPropagation()}>
+                      <button type="button" aria-label={`Kurangi ${product.name}`} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/20" onClick={() => qty(product.id, -1)}><Minus size={17} /></button>
+                      <b className="min-w-6 text-center text-sm">{cartQuantity}</b>
+                      <button type="button" aria-label={`Tambah ${product.name}`} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/20" onClick={() => qty(product.id, 1)}><Plus size={17} /></button>
+                    </span>
+                  ) : (
+                    <button type="button" aria-label={`Tambah ${product.name}`} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#f04e2a] text-white shadow-sm transition group-hover:scale-105" onClick={(event) => { event.stopPropagation(); add(product); }}><Plus size={22} /></button>
+                  )}
                 </div>
-              </button>
+              </article>
               );
             })}
           </div>
