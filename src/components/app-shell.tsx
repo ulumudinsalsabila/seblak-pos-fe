@@ -5,6 +5,7 @@ import {
   BarChart3,
   Boxes,
   ChevronRight,
+  ChefHat,
   Flame,
   LayoutDashboard,
   LogOut,
@@ -31,6 +32,7 @@ const nav = [
     owner: true,
   },
   { href: "/pos", label: "Kasir", icon: ShoppingBasket },
+  { href: "/kitchen", label: "Dapur", icon: ChefHat },
   { href: "/transactions", label: "Transaksi", icon: ReceiptText },
   { href: "/products", label: "Produk", icon: Boxes, owner: true },
   { href: "/categories", label: "Kategori", icon: Tags, owner: true },
@@ -49,9 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     expanded: boolean;
   } | null>(null);
   const sidebarExpanded =
-    sidebarOverride?.path === path
-      ? sidebarOverride.expanded
-      : path !== "/pos";
+    sidebarOverride?.path === path ? sidebarOverride.expanded : path !== "/pos";
   const links = nav.filter((item) => !item.owner || user?.role === "OWNER");
   async function signOut() {
     await logout();
@@ -142,7 +142,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
           >
             <LogOut size={14} />
-            <span className={clsx(!sidebarExpanded && "lg:hidden")}>Keluar</span>
+            <span className={clsx(!sidebarExpanded && "lg:hidden")}>
+              Keluar
+            </span>
           </button>
         </div>
       </aside>
@@ -172,8 +174,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <span className="ml-3 font-black">Saung Sunja POS</span>
           <div className="ml-auto text-right">
-            <p className="text-sm font-black">{user?.role === "OWNER" ? "Owner" : "Kasir"}</p>
-            <p className="hidden text-xs text-[#796c63] sm:block">{user?.email}</p>
+            <p className="text-sm font-black">
+              {user?.role === "OWNER" ? "Owner" : "Kasir"}
+            </p>
+            <p className="hidden text-xs text-[#796c63] sm:block">
+              {user?.email}
+            </p>
           </div>
         </header>
         <main className="mx-auto max-w-[1800px] p-4 sm:p-6 lg:p-7">

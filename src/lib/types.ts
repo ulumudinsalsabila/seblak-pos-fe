@@ -33,6 +33,8 @@ export type TransactionItem = {
   unitPrice: number;
   quantity: number;
   subtotal: number;
+  kitchenStatus: "PENDING" | "COMPLETED";
+  completedAt?: string;
 };
 export type Transaction = {
   id: string;
@@ -52,6 +54,9 @@ export type Transaction = {
   amountReceived?: number;
   changeAmount: number;
   status: "PAID" | "VOID";
+  kitchenStatus: "PENDING" | "COMPLETED";
+  kitchenCompletedAt?: string;
+  createdAt: string;
   paidAt: string;
   voidReason?: string;
   storeName: string;
