@@ -385,7 +385,9 @@ export default function KitchenPage() {
                             {item.productName}
                           </span>
                           <span className="mt-0.5 block text-xs text-[#8a7a6f]">
-                            Ketuk untuk tandai selesai
+                            {item.selectedOptions?.length
+                              ? item.selectedOptions.map((option) => `${option.groupName}: ${option.valueLabel}`).join(" · ")
+                              : `Rasa: ${tasteLabels[item.tastePreference]} · Pedas ${item.spicyLevel} · Kuah: ${brothLabels[item.brothLevel]}`}
                           </span>
                         </span>
                         <strong className="rounded-lg bg-[#2b1c15] px-2.5 py-1.5 text-white">
@@ -396,21 +398,21 @@ export default function KitchenPage() {
                   })}
                 </div>
 
-                <div className="mx-4 mb-4 rounded-xl bg-[#fff3e7] p-3 text-sm">
-                  <div className="flex flex-wrap gap-x-4 gap-y-2 font-bold text-[#6d4633]">
+                {(!order.items.some((item) => item.selectedOptions?.length) || order.notes) && <div className="mx-4 mb-4 rounded-xl bg-[#fff3e7] p-3 text-sm">
+                  {!order.items.some((item) => item.selectedOptions?.length) && <div className="flex flex-wrap gap-x-4 gap-y-2 font-bold text-[#6d4633]">
                     <span className="flex items-center gap-1">
                       <Flame size={15} className="text-[#e7562c]" />
                       Pedas {order.spicyLevel}
                     </span>
                     <span>Kuah: {brothLabels[order.brothLevel]}</span>
                     <span>Rasa: {tasteLabels[order.tastePreference]}</span>
-                  </div>
+                  </div>}
                   {order.notes && (
                     <p className="mt-2 border-t border-orange-200 pt-2 font-black text-[#b23b1f]">
                       Catatan: {order.notes}
                     </p>
                   )}
-                </div>
+                </div>}
 
                 {tab === "PENDING" && (
                   <div className="border-t border-[#eee3d9] p-4">

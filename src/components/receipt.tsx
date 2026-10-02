@@ -115,6 +115,7 @@ export function KitchenReceipt({ transaction }: { transaction: Transaction }) {
   const taste = { SALTY: "Asin", SAVORY: "Gurih", SWEET: "Manis" }[
     transaction.tastePreference
   ];
+  const hasMasterOptions = transaction.items.some((item) => item.selectedOptions?.length);
 
   return (
     <div
@@ -144,7 +145,7 @@ export function KitchenReceipt({ transaction }: { transaction: Transaction }) {
       </div>
 
       <div className="my-3 space-y-1 border-y border-dashed border-black py-2">
-        <div className="flex justify-between">
+        {!hasMasterOptions && <><div className="flex justify-between">
           <span>Level pedas</span>
           <b>{transaction.spicyLevel}</b>
         </div>
@@ -155,7 +156,7 @@ export function KitchenReceipt({ transaction }: { transaction: Transaction }) {
         <div className="flex justify-between">
           <span>Rasa</span>
           <b>{taste}</b>
-        </div>
+        </div></>}
         {transaction.notes && (
           <p className="mt-2 border border-black p-2 font-black">
             CATATAN: {transaction.notes}
