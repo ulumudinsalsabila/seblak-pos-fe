@@ -41,6 +41,10 @@ export type TransactionItem = {
   unitPrice: number;
   quantity: number;
   subtotal: number;
+  spicyLevel: number;
+  brothLevel: "LITTLE" | "MEDIUM" | "MUCH";
+  tastePreference: "SALTY" | "SAVORY" | "SWEET";
+  notes?: string;
   kitchenStatus: "PENDING" | "COMPLETED";
   completedAt?: string;
 };

@@ -1,5 +1,10 @@
 import type { Transaction } from "@/lib/types";
 import { dateTime, rupiah } from "@/lib/format";
+const itemOptions = (item: Transaction["items"][number]) => {
+  const taste = { SALTY: "Asin", SAVORY: "Gurih", SWEET: "Manis" }[item.tastePreference];
+  const broth = { LITTLE: "Sedikit", MEDIUM: "Sedang", MUCH: "Banyak" }[item.brothLevel];
+  return `Rasa ${taste} · Pedas ${item.spicyLevel} · Kuah ${broth}`;
+};
 export function Receipt({ transaction }: { transaction: Transaction }) {
   const width =
     transaction.receiptPaperSize === "MM80" ? "max-w-[80mm]" : "max-w-[58mm]";
@@ -40,6 +45,8 @@ export function Receipt({ transaction }: { transaction: Transaction }) {
               </span>
               <b>{rupiah(item.subtotal)}</b>
             </div>
+            <p className="text-[10px]">{itemOptions(item)}</p>
+            {item.notes && <p className="font-bold">Catatan: {item.notes}</p>}
           </div>
         ))}
       </div>
@@ -129,7 +136,7 @@ export function KitchenReceipt({ transaction }: { transaction: Transaction }) {
         {transaction.items.map((item) => (
           <div className="flex gap-3 text-base leading-5" key={item.id}>
             <b className="min-w-8 text-lg">{item.quantity}×</b>
-            <span className="font-bold">{item.productName}</span>
+            <div><p className="font-bold">{item.productName}</p><p className="text-xs font-normal">{itemOptions(item)}</p>{item.notes && <p className="mt-1 border border-black p-1 text-xs font-black">CATATAN: {item.notes}</p>}</div>
           </div>
         ))}
       </div>

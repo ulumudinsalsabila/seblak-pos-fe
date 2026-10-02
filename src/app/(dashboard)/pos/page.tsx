@@ -8,6 +8,7 @@ import {
   Plus,
   Printer,
   Search,
+  SlidersHorizontal,
   ShoppingCart,
   Trash2,
   UtensilsCrossed,
@@ -19,7 +20,19 @@ import type { Category, Product, Settings, Transaction } from "@/lib/types";
 import { KitchenReceipt, Receipt } from "@/components/receipt";
 import { ErrorNotice, Loading } from "@/components/ui";
 
-type CartLine = { product: Product; quantity: number };
+type ItemOptions = {
+  spicyLevel: number;
+  brothLevel: "LITTLE" | "MEDIUM" | "MUCH";
+  tastePreference: "SALTY" | "SAVORY" | "SWEET";
+  notes: string;
+};
+type CartLine = { product: Product; quantity: number; options: ItemOptions };
+const defaultItemOptions = (): ItemOptions => ({
+  spicyLevel: 0,
+  brothLevel: "MEDIUM",
+  tastePreference: "SAVORY",
+  notes: "",
+});
 const choiceClass = (active: boolean) =>
   active
     ? "btn-primary !px-2 !py-1.5 text-xs"
@@ -61,6 +74,8 @@ export default function PosPage() {
     "SALTY" | "SAVORY" | "SWEET"
   >("SAVORY");
   const [notes, setNotes] = useState("");
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [draftOptions, setDraftOptions] = useState<ItemOptions>(defaultItemOptions());
   const [discount, setDiscount] = useState(0);
   const [payment, setPayment] = useState<"CASH" | "QRIS" | "TRANSFER">("CASH");
   const [received, setReceived] = useState(0);
@@ -114,7 +129,7 @@ export default function PosPage() {
               ? { ...l, quantity: l.quantity + 1 }
               : l,
           )
-        : [...lines, { product, quantity: 1 }];
+        : [...lines, { product, quantity: 1, options: defaultItemOptions() }];
     });
   }
   function qty(id: string, delta: number) {
@@ -139,13 +154,15 @@ export default function PosPage() {
       items: cart.map((l) => ({
         productId: l.product.id,
         quantity: l.quantity,
+        ...l.options,
+        notes: l.options.notes.trim(),
       })),
       customerName: customerName.trim(),
       orderType,
-      spicyLevel: spicy,
-      brothLevel,
-      tastePreference,
-      notes,
+      spicyLevel: cart[0]?.options.spicyLevel ?? 0,
+      brothLevel: cart[0]?.options.brothLevel ?? "MEDIUM",
+      tastePreference: cart[0]?.options.tastePreference ?? "SAVORY",
+      notes: "",
       discount,
       paymentMethod: payment,
       amountReceived: payment === "CASH" ? received : undefined,
@@ -279,7 +296,7 @@ export default function PosPage() {
               type="button"
               className="flex w-full items-center gap-3 px-4 py-3 text-left xl:hidden"
               onClick={() => {
-                if (cart.length) setCheckoutStep(2);
+                if (checkoutStep === 2) setCheckoutStep(1);
                 setIsCartOpen(true);
               }}
             >
@@ -339,17 +356,15 @@ export default function PosPage() {
               <Trash2 size={20} />
             </button>
           </div>
-          <div className="grid shrink-0 grid-cols-3 gap-2 border-b border-[#eadfd3] bg-[#fffdfa] px-3 py-2 xl:px-4 xl:py-3">
+          <div className="grid shrink-0 grid-cols-2 gap-2 border-b border-[#eadfd3] bg-[#fffdfa] px-3 py-2 xl:px-4 xl:py-3">
             {(
               [
                 [1, "Pesanan"],
-                [2, "Detail"],
                 [3, "Bayar"],
               ] as const
             ).map(([step, label]) => {
               const disabled =
-                (step === 2 && !cart.length) ||
-                (step === 3 && (!cart.length || !customerName.trim()));
+                step === 3 && (!cart.length || !customerName.trim());
               const active = checkoutStep === step;
               const complete = checkoutStep > step;
 
@@ -382,6 +397,19 @@ export default function PosPage() {
 
           {checkoutStep === 1 && (
             <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="grid gap-2 border-b border-[#eadfd3] bg-[#fffdfa] p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <input
+                  className="field !min-h-10 !py-2 text-sm"
+                  value={customerName}
+                  maxLength={100}
+                  onChange={(event) => setCustomerName(event.target.value)}
+                  placeholder="Nama customer"
+                />
+                <div className="grid grid-cols-2 gap-1">
+                  <button type="button" onClick={() => setOrderType("DINE_IN")} className={choiceClass(orderType === "DINE_IN")}>Makan sini</button>
+                  <button type="button" onClick={() => setOrderType("TAKEAWAY")} className={choiceClass(orderType === "TAKEAWAY")}>Bungkus</button>
+                </div>
+              </div>
               <div className="max-h-[42vh] min-h-48 space-y-3 overflow-y-auto p-4">
                 {cart.map((line) => (
                   <div
@@ -395,21 +423,22 @@ export default function PosPage() {
                           {rupiah(line.product.price)}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        aria-label={`Hapus ${line.product.name}`}
-                        onClick={() =>
-                          setCart((value) =>
-                            value.filter(
-                              (item) => item.product.id !== line.product.id,
-                            ),
-                          )
-                        }
-                        className="text-red-500"
-                      >
-                        <Trash2 size={17} />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => { setEditingProductId(line.product.id); setDraftOptions({ ...line.options }); }} className="flex items-center gap-1 rounded-lg border border-[#eadfd3] px-2 py-1 text-xs font-bold text-[#e7562c]">
+                          <SlidersHorizontal size={14} /> Opsi
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Hapus ${line.product.name}`}
+                          onClick={() => setCart((value) => value.filter((item) => item.product.id !== line.product.id))}
+                          className="text-red-500"
+                        >
+                          <Trash2 size={17} />
+                        </button>
+                      </div>
                     </div>
+                    <p className="mt-2 text-xs text-[#796c63]">{itemOptionsLabel(line.options)}</p>
+                    {line.options.notes && <p className="mt-1 text-xs italic text-[#493a31]">Catatan: {line.options.notes}</p>}
                     <div className="mt-3 flex items-center justify-between">
                       <div className="flex items-center gap-3 rounded-lg bg-[#fff8f1] p-1">
                         <button
@@ -449,10 +478,10 @@ export default function PosPage() {
                 <button
                   type="button"
                   className="btn-primary w-full"
-                  disabled={!cart.length}
-                  onClick={() => setCheckoutStep(2)}
+                  disabled={!cart.length || !customerName.trim()}
+                  onClick={() => setCheckoutStep(3)}
                 >
-                  Lanjut ke detail pesanan
+                  Ke pembayaran
                 </button>
               </div>
             </div>
@@ -596,7 +625,7 @@ export default function PosPage() {
                     <button
                       type="button"
                       className="text-sm font-bold text-[#e7562c]"
-                      onClick={() => setCheckoutStep(2)}
+                      onClick={() => setCheckoutStep(1)}
                     >
                       Ubah
                     </button>
@@ -728,7 +757,7 @@ export default function PosPage() {
                   <button
                     type="button"
                     className="btn-ghost !px-3 !py-2 text-xs"
-                    onClick={() => setCheckoutStep(2)}
+                    onClick={() => setCheckoutStep(1)}
                   >
                     Kembali
                   </button>
@@ -754,6 +783,27 @@ export default function PosPage() {
           </div>
         </aside>
       </div>
+      {editingProductId && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4 backdrop-blur-sm">
+          <button type="button" aria-label="Tutup opsi menu" className="absolute inset-0" onClick={() => setEditingProductId(null)} />
+          <div role="dialog" aria-modal="true" aria-labelledby="item-options-title" className="relative z-10 max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <div><p className="text-xs font-bold uppercase tracking-wide text-[#e7562c]">Detail per menu</p><h2 id="item-options-title" className="text-xl font-black">Opsi menu</h2></div>
+              <button type="button" className="rounded-xl border border-[#eadfd3] p-2" onClick={() => setEditingProductId(null)}><X size={20} /></button>
+            </div>
+            <div className="space-y-4">
+              <OptionChoices label="Rasa" value={draftOptions.tastePreference} items={[["SALTY", "Asin"], ["SAVORY", "Gurih"], ["SWEET", "Manis"]]} onChange={(tastePreference) => setDraftOptions((value) => ({ ...value, tastePreference: tastePreference as ItemOptions["tastePreference"] }))} />
+              <OptionChoices label="Level pedas" value={String(draftOptions.spicyLevel)} items={[0, 1, 2, 3, 4, 5].map((value) => [String(value), String(value)])} onChange={(spicyLevel) => setDraftOptions((value) => ({ ...value, spicyLevel: Number(spicyLevel) }))} />
+              <OptionChoices label="Kuah" value={draftOptions.brothLevel} items={[["LITTLE", "Sedikit"], ["MEDIUM", "Sedang"], ["MUCH", "Banyak"]]} onChange={(brothLevel) => setDraftOptions((value) => ({ ...value, brothLevel: brothLevel as ItemOptions["brothLevel"] }))} />
+              <label><span className="label">CATATAN</span><textarea className="field min-h-24 resize-none" value={draftOptions.notes} maxLength={500} onChange={(event) => setDraftOptions((value) => ({ ...value, notes: event.target.value }))} placeholder="Contoh: tanpa topping, dll" /></label>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button type="button" className="btn-ghost" onClick={() => setEditingProductId(null)}>Batal</button>
+              <button type="button" className="btn-primary" onClick={() => { setCart((lines) => lines.map((line) => line.product.id === editingProductId ? { ...line, options: draftOptions } : line)); setEditingProductId(null); }}>Simpan opsi</button>
+            </div>
+          </div>
+        </div>
+      )}
       {result && (
         <>
           <div className="no-print fixed inset-0 z-50 flex justify-end bg-black/45 backdrop-blur-sm">
@@ -844,4 +894,14 @@ export default function PosPage() {
       )}
     </>
   );
+}
+
+function itemOptionsLabel(options: ItemOptions) {
+  const taste = { SALTY: "Asin", SAVORY: "Gurih", SWEET: "Manis" }[options.tastePreference];
+  const broth = { LITTLE: "Kuah sedikit", MEDIUM: "Kuah sedang", MUCH: "Kuah banyak" }[options.brothLevel];
+  return `${taste} · Pedas ${options.spicyLevel} · ${broth}`;
+}
+
+function OptionChoices({ label, value, items, onChange }: { label: string; value: string; items: string[][]; onChange(value: string): void }) {
+  return <div><span className="label">{label.toUpperCase()}</span><div className="grid grid-cols-3 gap-2">{items.map(([key, text]) => <button type="button" key={key} onClick={() => onChange(key)} className={choiceClass(value === key)}>{text}</button>)}</div></div>;
 }
