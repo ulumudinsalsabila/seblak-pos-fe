@@ -813,10 +813,7 @@ export default function PosPage() {
                   <KitchenReceipt transaction={result} />
                 )}
               </div>
-              <div className="grid shrink-0 grid-cols-2 gap-3 border-t border-[#eadfd3] bg-white p-5 sm:grid-cols-3">
-                <button type="button" className="btn-ghost col-span-2 sm:col-span-1" onClick={reset}>
-                  Transaksi baru
-                </button>
+              <div className="grid shrink-0 grid-cols-2 gap-3 border-t border-[#eadfd3] bg-white p-5">
                 <button
                   type="button"
                   className="btn-primary flex items-center justify-center gap-2 !bg-[#2b1c15]"
