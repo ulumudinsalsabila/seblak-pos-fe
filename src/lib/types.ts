@@ -45,8 +45,24 @@ export type TransactionItem = {
   brothLevel: "LITTLE" | "MEDIUM" | "MUCH";
   tastePreference: "SALTY" | "SAVORY" | "SWEET";
   notes?: string;
+  selectedOptions?: SelectedMenuOption[];
   kitchenStatus: "PENDING" | "COMPLETED";
   completedAt?: string;
+};
+export type MenuOptionValue = { id: string; label: string; isDefault?: boolean };
+export type MenuOptionGroup = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+  categoryIds: string[];
+  values: MenuOptionValue[];
+};
+export type SelectedMenuOption = {
+  groupId: string;
+  groupName: string;
+  valueId: string;
+  valueLabel: string;
 };
 export type Transaction = {
   id: string;
@@ -102,6 +118,7 @@ export type Settings = {
   receiptHeader?: string;
   receiptFooter?: string;
   receiptPaperSize: "MM58" | "MM80";
+  menuOptions: MenuOptionGroup[];
 };
 export type Branding = Pick<
   Settings,

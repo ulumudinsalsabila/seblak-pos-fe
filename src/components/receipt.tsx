@@ -1,6 +1,8 @@
 import type { Transaction } from "@/lib/types";
 import { dateTime, rupiah } from "@/lib/format";
 const itemOptions = (item: Transaction["items"][number]) => {
+  if (item.selectedOptions?.length)
+    return item.selectedOptions.map((option) => `${option.groupName} ${option.valueLabel}`).join(" · ");
   const taste = { SALTY: "Asin", SAVORY: "Gurih", SWEET: "Manis" }[item.tastePreference];
   const broth = { LITTLE: "Sedikit", MEDIUM: "Sedang", MUCH: "Banyak" }[item.brothLevel];
   return `Rasa ${taste} · Pedas ${item.spicyLevel} · Kuah ${broth}`;

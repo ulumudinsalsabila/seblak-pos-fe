@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { rupiah } from "@/lib/format";
-import type { Category, Product, Settings, Transaction } from "@/lib/types";
+import type { Category, MenuOptionGroup, Product, SelectedMenuOption, Settings, Transaction } from "@/lib/types";
 import { KitchenReceipt, Receipt } from "@/components/receipt";
 import { ErrorNotice, Loading } from "@/components/ui";
 
@@ -25,13 +25,21 @@ type ItemOptions = {
   brothLevel: "LITTLE" | "MEDIUM" | "MUCH";
   tastePreference: "SALTY" | "SAVORY" | "SWEET";
   notes: string;
+  selectedOptions: SelectedMenuOption[];
 };
 type CartLine = { product: Product; quantity: number; options: ItemOptions };
-const defaultItemOptions = (): ItemOptions => ({
+const defaultItemOptions = (product?: Product, groups: MenuOptionGroup[] = []): ItemOptions => ({
   spicyLevel: 0,
   brothLevel: "MEDIUM",
   tastePreference: "SAVORY",
   notes: "",
+  selectedOptions: groups
+    .filter((group) => group.isActive && product && group.categoryIds.includes(product.categoryId))
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .flatMap((group) => {
+      const value = group.values.find((item) => item.isDefault) ?? group.values[0];
+      return value ? [{ groupId: group.id, groupName: group.name, valueId: value.id, valueLabel: value.label }] : [];
+    }),
 });
 const choiceClass = (active: boolean) =>
   active
@@ -129,7 +137,7 @@ export default function PosPage() {
               ? { ...l, quantity: l.quantity + 1 }
               : l,
           )
-        : [...lines, { product, quantity: 1, options: defaultItemOptions() }];
+        : [...lines, { product, quantity: 1, options: defaultItemOptions(product, settings.data?.data.menuOptions ?? []) }];
     });
   }
   function qty(id: string, delta: number) {
@@ -792,9 +800,16 @@ export default function PosPage() {
               <button type="button" className="rounded-xl border border-[#eadfd3] p-2" onClick={() => setEditingProductId(null)}><X size={20} /></button>
             </div>
             <div className="space-y-4">
-              <OptionChoices label="Rasa" value={draftOptions.tastePreference} items={[["SALTY", "Asin"], ["SAVORY", "Gurih"], ["SWEET", "Manis"]]} onChange={(tastePreference) => setDraftOptions((value) => ({ ...value, tastePreference: tastePreference as ItemOptions["tastePreference"] }))} />
-              <OptionChoices label="Level pedas" value={String(draftOptions.spicyLevel)} items={[0, 1, 2, 3, 4, 5].map((value) => [String(value), String(value)])} onChange={(spicyLevel) => setDraftOptions((value) => ({ ...value, spicyLevel: Number(spicyLevel) }))} />
-              <OptionChoices label="Kuah" value={draftOptions.brothLevel} items={[["LITTLE", "Sedikit"], ["MEDIUM", "Sedang"], ["MUCH", "Banyak"]]} onChange={(brothLevel) => setDraftOptions((value) => ({ ...value, brothLevel: brothLevel as ItemOptions["brothLevel"] }))} />
+              {(settings.data?.data.menuOptions ?? []).filter((group) => {
+                const line = cart.find((item) => item.product.id === editingProductId);
+                return group.isActive && Boolean(line && group.categoryIds.includes(line.product.categoryId));
+              }).sort((a, b) => a.sortOrder - b.sortOrder).map((group) => (
+                <OptionChoices key={group.id} label={group.name} value={draftOptions.selectedOptions.find((selected) => selected.groupId === group.id)?.valueId ?? ""} items={group.values.map((value) => [value.id, value.label])} onChange={(valueId) => {
+                  const selectedValue = group.values.find((value) => value.id === valueId);
+                  if (!selectedValue) return;
+                  setDraftOptions((current) => ({ ...current, selectedOptions: [...current.selectedOptions.filter((selected) => selected.groupId !== group.id), { groupId: group.id, groupName: group.name, valueId: selectedValue.id, valueLabel: selectedValue.label }] }));
+                }} />
+              ))}
               <label><span className="label">CATATAN</span><textarea className="field min-h-24 resize-none" value={draftOptions.notes} maxLength={500} onChange={(event) => setDraftOptions((value) => ({ ...value, notes: event.target.value }))} placeholder="Contoh: tanpa topping, dll" /></label>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
@@ -897,6 +912,8 @@ export default function PosPage() {
 }
 
 function itemOptionsLabel(options: ItemOptions) {
+  if (options.selectedOptions.length)
+    return options.selectedOptions.map((option) => `${option.groupName}: ${option.valueLabel}`).join(" · ");
   const taste = { SALTY: "Asin", SAVORY: "Gurih", SWEET: "Manis" }[options.tastePreference];
   const broth = { LITTLE: "Kuah sedikit", MEDIUM: "Kuah sedang", MUCH: "Kuah banyak" }[options.brothLevel];
   return `${taste} · Pedas ${options.spicyLevel} · ${broth}`;
