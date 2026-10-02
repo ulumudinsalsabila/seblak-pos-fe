@@ -241,7 +241,11 @@ export default function PosPage() {
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {filtered.map((product) => (
+            {filtered.map((product) => {
+              const cartQuantity = cart.find(
+                (line) => line.product.id === product.id,
+              )?.quantity ?? 0;
+              return (
               <button
                 key={product.id}
                 onClick={() => add(product)}
@@ -260,6 +264,11 @@ export default function PosPage() {
                 >
                   {!product.imageUrl && (
                     <UtensilsCrossed size={42} className="text-[#e7562c]/45" />
+                  )}
+                  {cartQuantity > 0 && (
+                    <span className="absolute left-2 top-2 rounded-full bg-[#f04e2a] px-2.5 py-1 text-[11px] font-black text-white shadow-md">
+                      {cartQuantity} di keranjang
+                    </span>
                   )}
                   {product.trackStock && (
                     <span className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-[#796c63] shadow-sm">
@@ -282,7 +291,8 @@ export default function PosPage() {
                   </span>
                 </div>
               </button>
-            ))}
+              );
+            })}
           </div>
           {!filtered.length && (
             <p className="card p-10 text-center text-[#796c63]">
