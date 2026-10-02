@@ -10,8 +10,8 @@ export default function LoginPage() {
   const { user, loading, login } = useAuth();
   const branding = useBranding();
   const router = useRouter();
-  const [email, setEmail] = useState("owner@mail.com");
-  const [password, setPassword] = useState("12345678");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<unknown>();
   const [pending, setPending] = useState(false);
   useEffect(() => {
@@ -108,6 +108,8 @@ export default function LoginPage() {
               <input
                 className="field"
                 type="email"
+                autoComplete="email"
+                placeholder="nama@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -118,6 +120,8 @@ export default function LoginPage() {
               <input
                 className="field"
                 type="password"
+                autoComplete="current-password"
+                placeholder="Masukkan password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
