@@ -80,7 +80,7 @@ export function SearchSelect({
       <button
         type="button"
         disabled={disabled}
-        className="field flex items-center gap-2 text-left disabled:cursor-not-allowed disabled:opacity-50"
+        className="field !flex items-center gap-2 text-left disabled:cursor-not-allowed disabled:opacity-50"
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
@@ -103,10 +103,10 @@ export function SearchSelect({
               onChange("");
             }}
           >
-            <X size={16} />
+            <X className="shrink-0" size={16} />
           </span>
         ) : (
-          <ChevronDown size={17} />
+          <ChevronDown className="shrink-0" size={17} />
         )}
       </button>
       {open && (
