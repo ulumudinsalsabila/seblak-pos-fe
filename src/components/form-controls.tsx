@@ -1,7 +1,12 @@
 "use client";
 
 import { ChevronDown, Search, X } from "lucide-react";
-import { InputHTMLAttributes, TextareaHTMLAttributes, useMemo, useState } from "react";
+import {
+  InputHTMLAttributes,
+  TextareaHTMLAttributes,
+  useMemo,
+  useState,
+} from "react";
 import { clsx } from "clsx";
 
 export type SelectOption = {
@@ -44,6 +49,7 @@ export function SearchSelect({
   disabled,
   clearable = false,
   className,
+  menuMode = "overlay",
 }: {
   label?: string;
   value: string;
@@ -54,6 +60,7 @@ export function SearchSelect({
   disabled?: boolean;
   clearable?: boolean;
   className?: string;
+  menuMode?: "overlay" | "flow";
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -62,7 +69,9 @@ export function SearchSelect({
     const keyword = search.trim().toLowerCase();
     if (!keyword) return options;
     return options.filter((option) =>
-      `${option.label} ${option.description ?? ""}`.toLowerCase().includes(keyword),
+      `${option.label} ${option.description ?? ""}`
+        .toLowerCase()
+        .includes(keyword),
     );
   }, [options, search]);
 
@@ -76,7 +85,12 @@ export function SearchSelect({
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
-        <span className={clsx("min-w-0 flex-1 truncate", !selected && "text-[#9b8d83]")}>
+        <span
+          className={clsx(
+            "min-w-0 flex-1 truncate",
+            !selected && "text-[#9b8d83]",
+          )}
+        >
           {selected?.label ?? placeholder}
         </span>
         {clearable && selected ? (
@@ -96,9 +110,17 @@ export function SearchSelect({
         )}
       </button>
       {open && (
-        <div className="absolute z-50 mt-2 w-full min-w-52 overflow-hidden rounded-xl border border-[#eadfd3] bg-white shadow-xl">
+        <div
+          className={clsx(
+            "mt-2 w-full overflow-hidden rounded-xl border border-[#eadfd3] bg-white shadow-xl",
+            menuMode === "flow" ? "relative" : "absolute z-50 min-w-52",
+          )}
+        >
           <div className="relative border-b border-[#eadfd3] p-2">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9b8d83]" size={16} />
+            <Search
+              className="absolute left-5 top-1/2 -translate-y-1/2 text-[#9b8d83]"
+              size={16}
+            />
             <input
               autoFocus
               className="field min-h-10 py-2 pl-9"
@@ -119,7 +141,8 @@ export function SearchSelect({
                 key={option.value}
                 className={clsx(
                   "block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[#f2f6ff]",
-                  option.value === value && "bg-[#eaf1ff] font-black text-[var(--brand)]",
+                  option.value === value &&
+                    "bg-[#eaf1ff] font-black text-[var(--brand)]",
                 )}
                 onClick={() => {
                   onChange(option.value);
@@ -128,16 +151,38 @@ export function SearchSelect({
                 }}
               >
                 <span className="block">{option.label}</span>
-                {option.description && <span className="block text-xs text-[#796c63]">{option.description}</span>}
+                {option.description && (
+                  <span className="block text-xs text-[#796c63]">
+                    {option.description}
+                  </span>
+                )}
               </button>
             ))}
-            {!filtered.length && <p className="p-4 text-center text-sm text-[#796c63]">Data tidak ditemukan.</p>}
+            {!filtered.length && (
+              <p className="p-4 text-center text-sm text-[#796c63]">
+                Data tidak ditemukan.
+              </p>
+            )}
           </div>
         </div>
       )}
-      {open && <button type="button" aria-label="Tutup pilihan" className="fixed inset-0 z-[-1] cursor-default" onClick={() => setOpen(false)} />}
+      {open && menuMode === "overlay" && (
+        <button
+          type="button"
+          aria-label="Tutup pilihan"
+          className="fixed inset-0 z-[-1] cursor-default"
+          onClick={() => setOpen(false)}
+        />
+      )}
     </div>
   );
 
-  return label ? <label><span className="label">{label}</span>{control}</label> : control;
+  return label ? (
+    <label>
+      <span className="label">{label}</span>
+      {control}
+    </label>
+  ) : (
+    control
+  );
 }
