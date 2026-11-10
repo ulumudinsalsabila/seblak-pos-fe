@@ -19,7 +19,8 @@ import {
 import { clsx } from "clsx";
 import { api } from "@/lib/api";
 import type { Transaction } from "@/lib/types";
-import { Empty, ErrorNotice } from "@/components/ui";
+import { Empty, ErrorNotice } from "@/components/page-ui";
+import { useBranding } from "@/components/branding-provider";
 
 type KitchenResponse = { data: Transaction[]; meta: null };
 type Tab = "PENDING" | "COMPLETED";
@@ -71,6 +72,7 @@ function playBell() {
 
 export default function KitchenPage() {
   const queryClient = useQueryClient();
+  const { storeName } = useBranding();
   const [tab, setTab] = useState<Tab>("PENDING");
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [busyKey, setBusyKey] = useState("");
@@ -124,12 +126,13 @@ export default function KitchenPage() {
 
   useEffect(() => {
     document.title = pendingOrders.length
-      ? `(${pendingOrders.length}) Antrian Dapur • Saung Sunja`
-      : "Dapur • Saung Sunja";
+      ? `(${pendingOrders.length}) Antrian Dapur · ${storeName}`
+      : `Dapur · ${storeName}`;
     return () => {
-      document.title = "Saung Sunja POS";
+      // Same title BrandingProvider sets for every other page.
+      document.title = `${storeName} · DagoraApp`;
     };
-  }, [pendingOrders.length]);
+  }, [pendingOrders.length, storeName]);
 
   async function toggleSound() {
     const next = !soundEnabled;

@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import type { Transaction } from "@/lib/types";
 import { useAuth } from "@/components/auth-provider";
 import { KitchenReceipt, Receipt } from "@/components/receipt";
-import { ErrorNotice, Loading, PageHeader, StatusBadge } from "@/components/ui";
+import { ErrorNotice, Loading, PageHeader, StatusBadge } from "@/components/page-ui";
 export default function TransactionDetail({
   params,
 }: {

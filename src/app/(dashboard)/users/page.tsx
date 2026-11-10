@@ -11,7 +11,7 @@ import {
   Loading,
   PageHeader,
   StatusBadge,
-} from "@/components/ui";
+} from "@/components/page-ui";
 import { SearchSelect } from "@/components/form-controls";
 import { DataTablePagination, SearchInput } from "@/components/list-controls";
 

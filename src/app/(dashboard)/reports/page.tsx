@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { localDate, rupiah } from "@/lib/format";
-import { ErrorNotice, Loading, PageHeader } from "@/components/ui";
+import { ErrorNotice, Loading, PageHeader } from "@/components/page-ui";
 type Summary = {
   grossSales: number;
   discount: number;

@@ -3,7 +3,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Flame, LoaderCircle } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
-import { ErrorNotice } from "@/components/ui";
+import { ErrorNotice } from "@/components/page-ui";
 import { useBranding } from "@/components/branding-provider";
 
 export default function LoginPage() {

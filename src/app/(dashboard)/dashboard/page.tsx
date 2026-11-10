@@ -22,7 +22,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { dateTime, localDate, rupiah } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
-import { ErrorNotice, Loading, PageHeader, StatusBadge } from "@/components/ui";
+import { ErrorNotice, Loading, PageHeader, StatusBadge } from "@/components/page-ui";
 import { SearchSelect } from "@/components/form-controls";
 
 type ComparisonValue = { current: number | null; previous: number | null; percent: number | null };
@@ -166,9 +166,9 @@ export default function DashboardPage() {
             }
           }}
         />
-        <div className="flex gap-1 overflow-x-auto rounded-xl bg-[var(--muted-surface)] p-1">
+        <div className="flex gap-1 overflow-x-auto rounded-xl bg-[var(--muted)] p-1">
           {(["today", "yesterday", "7d", "30d", "custom"] as Preset[]).map((item) => (
-            <button key={item} type="button" aria-pressed={preset === item} onClick={() => choosePreset(item)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold ${preset === item ? "bg-[var(--card)] text-[var(--primary)] shadow-sm" : "text-[var(--muted)]"}`}>
+            <button key={item} type="button" aria-pressed={preset === item} onClick={() => choosePreset(item)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold ${preset === item ? "bg-[var(--card)] text-[var(--primary)] shadow-sm" : "text-[var(--muted-foreground)]"}`}>
               {{ today: "Hari ini", yesterday: "Kemarin", "7d": "7 hari", "30d": "30 hari", custom: "Pilih tanggal" }[item]}
             </button>
           ))}
@@ -179,7 +179,7 @@ export default function DashboardPage() {
             <input aria-label="Tanggal akhir" className="field" type="date" value={range.to} min={range.from} onChange={(event) => event.target.value && setRange((current) => ({ ...current, to: event.target.value }))} />
           </div>
         )}
-        <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
+        <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
           <Clock3 size={15} /> {data ? `Diperbarui ${dateTime(data.generatedAt)}` : "WIB"}
         </div>
         <button type="button" className="btn-ghost flex items-center justify-center gap-2" onClick={() => query.refetch()} disabled={query.isFetching}>
@@ -228,14 +228,14 @@ export default function DashboardPage() {
 
           <section className="card mt-5 overflow-hidden">
             <div className="flex items-center justify-between border-b border-[var(--border)] p-5">
-              <div><h2 className="font-black">Transaksi terbaru</h2><p className="text-xs text-[var(--muted)]">Transaksi lunas terakhir pada periode ini.</p></div>
+              <div><h2 className="font-black">Transaksi terbaru</h2><p className="text-xs text-[var(--muted-foreground)]">Transaksi lunas terakhir pada periode ini.</p></div>
               <Link href="/transactions" className="flex items-center gap-1 text-sm font-bold text-[var(--primary)]">Lihat semua <ArrowRight size={15} /></Link>
             </div>
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full text-sm"><thead className="bg-[var(--muted-surface)] text-left text-xs text-[var(--muted)]"><tr><th className="p-4">INVOICE</th><th>OUTLET</th><th>WAKTU</th><th>METODE</th><th>STATUS</th><th className="pr-4 text-right">TOTAL</th></tr></thead><tbody>{data.recentTransactions.map((item) => <tr key={item.id} className="border-t border-[var(--border)]"><td className="p-4"><Link className="font-black hover:text-[var(--primary)]" href={`/transactions/${item.id}`}>{item.invoiceNo}</Link></td><td>{item.outlet.name}</td><td>{dateTime(item.paidAt)}</td><td>{paymentLabels[item.paymentMethod] ?? item.paymentMethod}</td><td><StatusBadge status={item.status} /></td><td className="pr-4 text-right font-black">{rupiah(item.total)}</td></tr>)}</tbody></table>
+              <table className="w-full text-sm"><thead className="bg-[var(--muted)] text-left text-xs text-[var(--muted-foreground)]"><tr><th className="p-4">INVOICE</th><th>OUTLET</th><th>WAKTU</th><th>METODE</th><th>STATUS</th><th className="pr-4 text-right">TOTAL</th></tr></thead><tbody>{data.recentTransactions.map((item) => <tr key={item.id} className="border-t border-[var(--border)]"><td className="p-4"><Link className="font-black hover:text-[var(--primary)]" href={`/transactions/${item.id}`}>{item.invoiceNo}</Link></td><td>{item.outlet.name}</td><td>{dateTime(item.paidAt)}</td><td>{paymentLabels[item.paymentMethod] ?? item.paymentMethod}</td><td><StatusBadge status={item.status} /></td><td className="pr-4 text-right font-black">{rupiah(item.total)}</td></tr>)}</tbody></table>
             </div>
-            <div className="divide-y divide-[var(--border)] md:hidden">{data.recentTransactions.map((item) => <Link href={`/transactions/${item.id}`} key={item.id} className="flex items-center gap-3 p-4"><div className="min-w-0 flex-1"><p className="truncate font-black">{item.invoiceNo}</p><p className="text-xs text-[var(--muted)]">{item.outlet.name} · {dateTime(item.paidAt)}</p></div><b>{rupiah(item.total)}</b></Link>)}</div>
-            {!data.recentTransactions.length && <p className="p-8 text-center text-[var(--muted)]">Belum ada transaksi pada periode ini.</p>}
+            <div className="divide-y divide-[var(--border)] md:hidden">{data.recentTransactions.map((item) => <Link href={`/transactions/${item.id}`} key={item.id} className="flex items-center gap-3 p-4"><div className="min-w-0 flex-1"><p className="truncate font-black">{item.invoiceNo}</p><p className="text-xs text-[var(--muted-foreground)]">{item.outlet.name} · {dateTime(item.paidAt)}</p></div><b>{rupiah(item.total)}</b></Link>)}</div>
+            {!data.recentTransactions.length && <p className="p-8 text-center text-[var(--muted-foreground)]">Belum ada transaksi pada periode ini.</p>}
           </section>
         </div>
       )}
@@ -248,7 +248,7 @@ function KpiCard({ label, value, count, icon: Icon, hint, polarity, comparison, 
   const direction = comparison === undefined || comparison === null || comparison === 0 ? "flat" : comparison > 0 ? "up" : "down";
   const tone =
     direction === "flat" || polarity === "neutral"
-      ? "text-[var(--muted)]"
+      ? "text-[var(--muted-foreground)]"
       : (direction === "up") === (polarity === "up-good")
         ? "text-emerald-700"
         : "text-red-600";
@@ -264,9 +264,9 @@ function KpiCard({ label, value, count, icon: Icon, hint, polarity, comparison, 
         </span>
       )}
     </div>
-    <p className="mt-4 truncate text-xs font-bold text-[var(--muted)]">{label}</p>
+    <p className="mt-4 truncate text-xs font-bold text-[var(--muted-foreground)]">{label}</p>
     <p className="mt-1 truncate text-xl font-black xl:text-2xl">{unavailable ? "Belum tersedia" : count ? String(value ?? 0) : rupiah(value ?? 0)}</p>
-    <p className={`mt-1 text-[11px] ${unavailable ? "text-amber-700" : "text-[var(--muted)]"}`}>{unavailable ? "Lengkapi HPP produk agar laba kotor bisa dihitung." : hint}</p>
+    <p className={`mt-1 text-[11px] ${unavailable ? "text-amber-700" : "text-[var(--muted-foreground)]"}`}>{unavailable ? "Lengkapi HPP produk agar laba kotor bisa dihitung." : hint}</p>
   </article>;
 }
 
@@ -275,12 +275,12 @@ function TrendChart({ data, multiDay }: { data: TrendPoint[]; multiDay: boolean 
   const points = data.map((item, index) => `${data.length <= 1 ? 50 : (index / (data.length - 1)) * 100},${92 - (item.netSales / max) * 78}`).join(" ");
   const hasSales = data.some((item) => item.netSales > 0);
   return <section className="card p-5">
-    <div className="mb-4"><h2 className="font-black">Tren omzet</h2><p className="text-xs text-[var(--muted)]">Omzet per {data[0]?.bucket.length === 10 ? "hari" : "jam"} pada periode aktif (WIB).</p></div>
+    <div className="mb-4"><h2 className="font-black">Tren omzet</h2><p className="text-xs text-[var(--muted-foreground)]">Omzet per {data[0]?.bucket.length === 10 ? "hari" : "jam"} pada periode aktif (WIB).</p></div>
     {data.length && hasSales ? <>
       <svg viewBox="0 0 100 100" aria-hidden className="h-56 w-full" preserveAspectRatio="none"><polyline points={`0,100 ${points} 100,100`} fill="var(--primary)" fillOpacity=".12" stroke="none"/><polyline points={points} fill="none" stroke="var(--primary)" strokeWidth="2.2" vectorEffect="non-scaling-stroke"/></svg>
-      <div className="flex justify-between text-[10px] text-[var(--muted)]"><span>{bucketLabel(data[0].bucket, multiDay)}</span><span>{bucketLabel(data.at(-1)!.bucket, multiDay)}</span></div>
+      <div className="flex justify-between text-[10px] text-[var(--muted-foreground)]"><span>{bucketLabel(data[0].bucket, multiDay)}</span><span>{bucketLabel(data.at(-1)!.bucket, multiDay)}</span></div>
       <table className="sr-only"><caption>Omzet per periode</caption><thead><tr><th>Waktu</th><th>Omzet</th><th>Transaksi</th></tr></thead><tbody>{data.map((item) => <tr key={item.bucket}><td>{bucketLabel(item.bucket, true)}</td><td>{rupiah(item.netSales)}</td><td>{item.transactionCount}</td></tr>)}</tbody></table>
-    </> : <div className="grid h-56 place-items-center text-sm text-[var(--muted)]">Belum ada penjualan pada periode ini.</div>}
+    </> : <div className="grid h-56 place-items-center text-sm text-[var(--muted-foreground)]">Belum ada penjualan pada periode ini.</div>}
   </section>;
 }
 
@@ -289,13 +289,13 @@ function PaymentMix({ data }: { data: DashboardData["paymentMix"] }) {
   let cursor = 0;
   const colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)"];
   const stops = data.map((item, index) => { const start = cursor; cursor += total ? ((item._sum.total ?? 0) / total) * 100 : 0; return `${colors[index % colors.length]} ${start}% ${cursor}%`; });
-  return <section className="card p-5"><h2 className="font-black">Metode pembayaran</h2><p className="text-xs text-[var(--muted)]">Total dibayar pelanggan, termasuk pajak.</p><div className="mt-5 flex items-center gap-5"><div aria-hidden className="h-32 w-32 shrink-0 rounded-full" style={{ background: data.length ? `conic-gradient(${stops.join(",")})` : "var(--muted-surface)" }}><div className="m-8 h-16 w-16 rounded-full bg-[var(--card)]" /></div><div className="min-w-0 flex-1 space-y-3">{data.map((item, index) => <div key={item.paymentMethod} className="flex items-center gap-2 text-sm"><span className="h-2.5 w-2.5 rounded-full" style={{ background: colors[index % colors.length] }} /><span className="flex-1">{paymentLabels[item.paymentMethod] ?? item.paymentMethod}<span className="ml-1 text-xs text-[var(--muted)]">{item._count._all}× · {total ? Math.round(((item._sum.total ?? 0) / total) * 100) : 0}%</span></span><b>{rupiah(item._sum.total ?? 0)}</b></div>)}{!data.length && <p className="text-sm text-[var(--muted)]">Belum ada pembayaran.</p>}</div></div></section>;
+  return <section className="card p-5"><h2 className="font-black">Metode pembayaran</h2><p className="text-xs text-[var(--muted-foreground)]">Total dibayar pelanggan, termasuk pajak.</p><div className="mt-5 flex items-center gap-5"><div aria-hidden className="h-32 w-32 shrink-0 rounded-full" style={{ background: data.length ? `conic-gradient(${stops.join(",")})` : "var(--muted)" }}><div className="m-8 h-16 w-16 rounded-full bg-[var(--card)]" /></div><div className="min-w-0 flex-1 space-y-3">{data.map((item, index) => <div key={item.paymentMethod} className="flex items-center gap-2 text-sm"><span className="h-2.5 w-2.5 rounded-full" style={{ background: colors[index % colors.length] }} /><span className="flex-1">{paymentLabels[item.paymentMethod] ?? item.paymentMethod}<span className="ml-1 text-xs text-[var(--muted-foreground)]">{item._count._all}× · {total ? Math.round(((item._sum.total ?? 0) / total) * 100) : 0}%</span></span><b>{rupiah(item._sum.total ?? 0)}</b></div>)}{!data.length && <p className="text-sm text-[var(--muted-foreground)]">Belum ada pembayaran.</p>}</div></div></section>;
 }
 
 function RankedList({ title, icon, rows, empty }: { title: string; icon: React.ReactNode; rows: Array<{ label: string; detail: string; value: string }>; empty: string }) {
-  return <section className="card p-5"><h2 className="flex items-center gap-2 font-black">{icon}{title}</h2><div className="mt-4 space-y-3">{rows.slice(0, 6).map((row, index) => <div key={`${row.label}-${index}`} className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--muted-surface)] text-xs font-black">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{row.label}</p><p className="text-xs text-[var(--muted)]">{row.detail}</p></div><b className="text-sm">{row.value}</b></div>)}{!rows.length && <p className="text-sm text-[var(--muted)]">{empty}</p>}</div></section>;
+  return <section className="card p-5"><h2 className="flex items-center gap-2 font-black">{icon}{title}</h2><div className="mt-4 space-y-3">{rows.slice(0, 6).map((row, index) => <div key={`${row.label}-${index}`} className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--muted)] text-xs font-black">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{row.label}</p><p className="text-xs text-[var(--muted-foreground)]">{row.detail}</p></div><b className="text-sm">{row.value}</b></div>)}{!rows.length && <p className="text-sm text-[var(--muted-foreground)]">{empty}</p>}</div></section>;
 }
 
 function LowStock({ rows }: { rows: DashboardData["lowStock"] }) {
-  return <section className="card p-5"><div className="flex items-center justify-between"><h2 className="flex items-center gap-2 font-black"><PackageSearch size={19}/>Stok menipis</h2><Link href="/products" className="text-xs font-bold text-[var(--primary)]">Kelola produk</Link></div><div className="mt-4 space-y-3">{rows.slice(0, 6).map((row) => <div key={row.id} className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-100 text-amber-700"><Boxes size={17}/></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{row.name}</p><p className="text-xs text-[var(--muted)]">{row.outlet.name} · batas {row.lowStockThreshold}</p></div><b className="text-amber-700">Sisa {row.stock}</b></div>)}{!rows.length && <p className="text-sm text-[var(--muted)]">Tidak ada produk di bawah batas stok. Atur batas stok menipis di halaman produk.</p>}</div></section>;
+  return <section className="card p-5"><div className="flex items-center justify-between"><h2 className="flex items-center gap-2 font-black"><PackageSearch size={19}/>Stok menipis</h2><Link href="/products" className="text-xs font-bold text-[var(--primary)]">Kelola produk</Link></div><div className="mt-4 space-y-3">{rows.slice(0, 6).map((row) => <div key={row.id} className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-100 text-amber-700"><Boxes size={17}/></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{row.name}</p><p className="text-xs text-[var(--muted-foreground)]">{row.outlet.name} · batas {row.lowStockThreshold}</p></div><b className="text-amber-700">Sisa {row.stock}</b></div>)}{!rows.length && <p className="text-sm text-[var(--muted-foreground)]">Tidak ada produk di bawah batas stok. Atur batas stok menipis di halaman produk.</p>}</div></section>;
 }

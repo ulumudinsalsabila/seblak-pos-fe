@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Category, MenuOptionGroup, Settings } from "@/lib/types";
-import { ErrorNotice, Loading, PageHeader } from "@/components/ui";
+import { ErrorNotice, Loading, PageHeader } from "@/components/page-ui";
 
 const newId = () => crypto.randomUUID();
 

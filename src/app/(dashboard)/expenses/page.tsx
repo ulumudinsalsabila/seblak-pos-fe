@@ -5,7 +5,7 @@ import { Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { localDate, rupiah } from "@/lib/format";
 import type { Expense } from "@/lib/types";
-import { Empty, ErrorNotice, Loading, PageHeader } from "@/components/ui";
+import { Empty, ErrorNotice, Loading, PageHeader } from "@/components/page-ui";
 import { DataTablePagination, SearchInput } from "@/components/list-controls";
 export default function ExpensesPage() {
   const client = useQueryClient();

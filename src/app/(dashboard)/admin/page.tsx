@@ -18,7 +18,7 @@ import {
   Loading,
   PageHeader,
   StatusBadge,
-} from "@/components/ui";
+} from "@/components/page-ui";
 import { rupiah } from "@/lib/format";
 import { useAuth } from "@/components/auth-provider";
 import { FormInput, SearchSelect } from "@/components/form-controls";

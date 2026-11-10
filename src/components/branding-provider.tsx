@@ -3,54 +3,27 @@
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import {
+  applyBrandVars,
+  brandVars,
+  clearBrandVars,
+  DEFAULT_PRIMARY,
+  isHexColor,
+  THEME_STORAGE_KEY,
+} from "@/lib/theme";
 import type { Branding, TenantTheme } from "@/lib/types";
 import { useAuth } from "./auth-provider";
+
+export { contrastRatio, isHexColor, readableForeground } from "@/lib/theme";
 
 const fallbackBranding: Branding = {
   storeName: "DagoraApp",
   logoUrl: "/dagoraapp-logo.png",
   faviconUrl: "/dagoraapp-favicon.png",
-  primaryColor: "#C2410C",
+  primaryColor: DEFAULT_PRIMARY,
 };
 
 const BrandingContext = createContext<Branding>(fallbackBranding);
-
-const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
-const DARK_TEXT = "#0F172A";
-
-export function isHexColor(value: string | null | undefined): value is string {
-  return Boolean(value && HEX_COLOR.test(value));
-}
-
-function rgb(color: string) {
-  const value = Number.parseInt(color.slice(1), 16);
-  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
-}
-
-function relativeLuminance(color: string) {
-  const [red, green, blue] = rgb(color).map((channel) => {
-    const normalized = channel / 255;
-    return normalized <= 0.03928
-      ? normalized / 12.92
-      : ((normalized + 0.055) / 1.055) ** 2.4;
-  });
-  return red * 0.2126 + green * 0.7152 + blue * 0.0722;
-}
-
-/** WCAG contrast ratio between two `#RRGGBB` colours. */
-export function contrastRatio(a: string, b: string) {
-  const [light, dark] = [relativeLuminance(a), relativeLuminance(b)].sort(
-    (x, y) => y - x,
-  );
-  return (light + 0.05) / (dark + 0.05);
-}
-
-/** White or dark text, whichever has the higher contrast on `color`. */
-export function readableForeground(color: string) {
-  return contrastRatio(color, "#FFFFFF") >= contrastRatio(color, DARK_TEXT)
-    ? "#FFFFFF"
-    : DARK_TEXT;
-}
 
 function versionedIconUrl(url: string) {
   let hash = 0;
@@ -81,6 +54,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
   const tenantId = theme?.tenantId;
   const tenantName = theme?.tenantName;
   const tenantSlug = theme?.tenantSlug;
+  const signedOut = !loading && !user;
 
   useEffect(() => {
     const sourceUrl = faviconUrl || logoUrl || "/favicon.ico";
@@ -110,25 +84,26 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
   }, [faviconUrl, logoUrl]);
 
   useEffect(() => {
-    const [red, green, blue] = rgb(primaryColor);
-    const darken = (channel: number) => Math.max(0, Math.round(channel * 0.78));
-    const dark = `#${[darken(red), darken(green), darken(blue)]
-      .map((channel) => channel.toString(16).padStart(2, "0"))
-      .join("")}`;
     const root = document.documentElement;
-    root.style.setProperty("--brand", primaryColor);
-    root.style.setProperty("--brand-dark", dark);
-    root.style.setProperty("--brand-rgb", `${red}, ${green}, ${blue}`);
-    root.style.setProperty("--primary", primaryColor);
-    root.style.setProperty(
-      "--primary-foreground",
-      readableForeground(primaryColor),
-    );
     // Dark mode is deferred until every page uses tokens; clear any class a
     // previous build may have left behind.
     root.classList.remove("dark");
+    if (signedOut) {
+      // No previous tenant's colours may survive a logout or expired session.
+      localStorage.removeItem(THEME_STORAGE_KEY);
+      clearBrandVars();
+    } else if (tenantId) {
+      const vars = brandVars(primaryColor);
+      applyBrandVars(vars);
+      localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify({ tenantId, vars }));
+    }
+    // While auth or the theme is still loading, keep whatever the boot script
+    // applied so the colour does not flash.
+  }, [signedOut, tenantId, primaryColor]);
+
+  useEffect(() => {
     document.title = `${storeName} · DagoraApp`;
-  }, [primaryColor, storeName]);
+  }, [storeName]);
 
   const context = useMemo<Branding>(
     () => ({

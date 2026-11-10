@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Settings, TenantTheme } from "@/lib/types";
-import { ErrorNotice, Loading, PageHeader } from "@/components/ui";
+import { ErrorNotice, Loading, PageHeader } from "@/components/page-ui";
 import { SearchSelect } from "@/components/form-controls";
 import { useAuth } from "@/components/auth-provider";
 import {
@@ -154,7 +154,7 @@ export default function SettingsPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-black">Tema & logo tenant</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">
+            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
               Berlaku untuk seluruh outlet{savedTheme ? ` ${savedTheme.tenantName}` : ""}: warna utama, logo aplikasi, dan favicon.
             </p>
             {!canEditTheme && (
@@ -184,12 +184,12 @@ export default function SettingsPage() {
                 {!themeColorValid && <span className="mt-1 block text-xs font-bold text-red-600">Gunakan format #RRGGBB, misalnya #C2410C.</span>}
               </label>
               <div className="rounded-2xl border border-[var(--border)] p-4">
-                <p className="text-xs font-bold text-[var(--muted)]">PREVIEW</p>
+                <p className="text-xs font-bold text-[var(--muted-foreground)]">PREVIEW</p>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <span className="rounded-xl px-4 py-2 text-sm font-black" style={{ background: previewColor, color: previewForeground }}>Tombol utama</span>
                   <span className="text-sm font-black" style={{ color: previewColor }}>Tautan</span>
                 </div>
-                <p className={`mt-3 text-xs ${previewContrast < 4.5 ? "font-bold text-amber-700" : "text-[var(--muted)]"}`}>
+                <p className={`mt-3 text-xs ${previewContrast < 4.5 ? "font-bold text-amber-700" : "text-[var(--muted-foreground)]"}`}>
                   Kontras teks tombol {previewContrast.toFixed(1)}:1{previewContrast < 4.5 ? " — kurang terbaca, pilih warna lebih gelap atau lebih terang." : ""}
                 </p>
               </div>
@@ -206,7 +206,7 @@ export default function SettingsPage() {
                         style={{ backgroundImage: `url(${JSON.stringify(imageUrl || "/dagoraapp-logo.png")})` }}
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="mb-2 text-xs text-[var(--muted)]">{help}, maksimal 2 MB.</p>
+                        <p className="mb-2 text-xs text-[var(--muted-foreground)]">{help}, maksimal 2 MB.</p>
                         {canEditTheme && (
                           <>
                             <label className="btn-ghost relative inline-flex cursor-pointer items-center text-sm">
