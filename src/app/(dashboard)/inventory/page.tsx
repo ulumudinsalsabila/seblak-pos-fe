@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Boxes, MapPin, PackageX } from "lucide-react";
 import { useEffect, useState } from "react";
 import { SearchSelect } from "@/components/form-controls";
-import { Empty, ErrorNotice, Loading, PageHeader } from "@/components/ui";
+import { Empty, ErrorNotice, Loading, PageHeader } from "@/components/page-ui";
 import { api } from "@/lib/api";
 import { rupiah } from "@/lib/format";
 import type {

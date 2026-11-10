@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Category } from "@/lib/types";
@@ -11,7 +11,9 @@ import {
   Loading,
   PageHeader,
   StatusBadge,
-} from "@/components/ui";
+} from "@/components/page-ui";
+import { DataTablePagination, SearchInput } from "@/components/list-controls";
+import { SearchSelect } from "@/components/form-controls";
 
 type CategoryForm = {
   name: string;
@@ -30,10 +32,17 @@ export default function CategoriesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [form, setForm] = useState<CategoryForm>(emptyForm);
+  const [filters, setFilters] = useState({ search: "", status: "", page: 1, limit: 10 });
 
   const query = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => api<{ data: Category[] }>("/categories"),
+    queryKey: ["categories", "admin", filters],
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(filters.page), limit: String(filters.limit) });
+      if (filters.search) params.set("search", filters.search);
+      if (filters.status) params.set("status", filters.status);
+      return api<{ data: Category[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(`/categories?${params}`);
+    },
+    placeholderData: keepPreviousData,
   });
 
   const save = useMutation({
@@ -102,9 +111,6 @@ export default function CategoriesPage() {
     save.mutate();
   }
 
-  if (query.isLoading) return <Loading />;
-  if (query.error) return <ErrorNotice error={query.error} />;
-
   return (
     <>
       <PageHeader
@@ -122,7 +128,14 @@ export default function CategoriesPage() {
         }
       />
 
+      <section className="card mb-5 grid gap-3 p-4 sm:grid-cols-[1fr_220px]">
+        <SearchInput value={filters.search} placeholder="Cari nama atau deskripsi kategori..." onChange={(search) => setFilters((current) => ({ ...current, search, page: 1 }))} />
+        <SearchSelect value={filters.status} clearable placeholder="Semua status" options={[{ value: "ACTIVE", label: "Aktif" }, { value: "INACTIVE", label: "Nonaktif" }]} onChange={(status) => setFilters((current) => ({ ...current, status, page: 1 }))} />
+      </section>
+
       <section className="card overflow-hidden">
+        {query.isLoading && <Loading />}
+        {query.error && <div className="p-4"><ErrorNotice error={query.error} /></div>}
         <div className="divide-y divide-[#f1e8df]">
           {query.data?.data.map((item) => (
             <div
@@ -174,7 +187,8 @@ export default function CategoriesPage() {
             </div>
           ))}
         </div>
-        {!query.data?.data.length && <Empty>Belum ada kategori.</Empty>}
+        {query.data && !query.data.data.length && <Empty>{filters.search || filters.status ? "Tidak ada kategori yang cocok." : "Belum ada kategori."}</Empty>}
+        {query.data?.meta && <DataTablePagination {...query.data.meta} disabled={query.isFetching} onPageChange={(page) => setFilters((current) => ({ ...current, page }))} onLimitChange={(limit) => setFilters((current) => ({ ...current, limit, page: 1 }))} />}
       </section>
       {remove.error && <div className="mt-4"><ErrorNotice error={remove.error} /></div>}
 
