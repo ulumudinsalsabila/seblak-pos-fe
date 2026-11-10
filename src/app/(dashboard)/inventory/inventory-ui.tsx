@@ -14,6 +14,7 @@ export type PageResult<T> = {
 const inventoryLinks = [
   { href: "/inventory", label: "Ringkasan", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/items", label: "Item stok", roles: ["OWNER", "MANAGER"] },
+  { href: "/inventory/recipes", label: "Resep", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/locations", label: "Lokasi", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/units", label: "Satuan", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/opening-balances", label: "Saldo awal", roles: ["OWNER"] },

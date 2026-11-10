@@ -6,6 +6,7 @@ import {
   Boxes,
   Building2,
   ChefHat,
+  CookingPot,
   ChevronsUpDown,
   Flame,
   LayoutDashboard,
@@ -83,6 +84,7 @@ const navGroups: Array<{ label: string; items: TenantNavItem[] }> = [
     items: [
       { href: "/inventory", label: "Ringkasan", icon: Warehouse, exact: true, roles: ["OWNER", "MANAGER"] },
       { href: "/inventory/items", label: "Item stok", icon: PackageSearch, roles: ["OWNER", "MANAGER"] },
+      { href: "/inventory/recipes", label: "Resep & mapping", icon: CookingPot, roles: ["OWNER", "MANAGER"] },
       { href: "/inventory/locations", label: "Lokasi stok", icon: MapPinned, roles: ["OWNER", "MANAGER"] },
       { href: "/inventory/units", label: "Satuan", icon: Ruler, roles: ["OWNER", "MANAGER"] },
       { href: "/inventory/opening-balances", label: "Saldo awal", icon: PackagePlus, roles: ["OWNER"] },
