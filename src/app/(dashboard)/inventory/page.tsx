@@ -1,7 +1,8 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Boxes, MapPin, PackageX } from "lucide-react";
+import { AlertTriangle, ArrowRight, Boxes, MapPin, MapPinned, PackageSearch, PackageX, Ruler, ScrollText } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SearchSelect } from "@/components/form-controls";
 import { Empty, ErrorNotice, Loading, PageHeader } from "@/components/page-ui";
@@ -86,6 +87,21 @@ export default function InventoryPage() {
         title="Inventory"
         description="Saldo stok per lokasi dengan ledger yang terisolasi per tenant."
       />
+
+      <section className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { href: "/inventory/items", label: "Kelola item", description: "Bahan dan satuan", icon: PackageSearch },
+          { href: "/inventory/locations", label: "Lokasi stok", description: "Gudang dan outlet", icon: MapPinned },
+          { href: "/inventory/units", label: "Kelola satuan", description: "Unit dan konversi", icon: Ruler },
+          { href: "/inventory/movements", label: "Buka kartu stok", description: "Audit pergerakan", icon: ScrollText },
+        ].map(({ href, label, description, icon: Icon }) => (
+          <Link className="card group flex items-center gap-3 p-4 transition hover:border-primary/40" href={href} key={href}>
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Icon size={19} /></span>
+            <span className="min-w-0 flex-1"><span className="block font-bold">{label}</span><span className="block text-xs text-muted-foreground">{description}</span></span>
+            <ArrowRight className="text-muted-foreground transition group-hover:translate-x-0.5" size={17} />
+          </Link>
+        ))}
+      </section>
 
       <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {cards.map(({ label, value, icon: Icon }) => (

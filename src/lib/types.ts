@@ -160,6 +160,18 @@ export type InventoryItem = {
   reorderPoint: string;
   isActive: boolean;
   baseUnit: InventoryUnit;
+  conversions?: ItemUnitConversion[];
+  _count?: { conversions: number };
+};
+export type ItemUnitConversion = {
+  id: string;
+  mode: "SAME_DIMENSION" | "PACKAGING" | "DENSITY";
+  factorToBase: string;
+  density?: string | null;
+  notes?: string | null;
+  validFrom: string;
+  validTo?: string | null;
+  unit: InventoryUnit;
 };
 export type StockLocation = {
   id: string;
@@ -190,4 +202,21 @@ export type InventoryOverview = {
     totalBalances: number;
     missingCosts: number;
   };
+};
+export type StockMovement = {
+  id: string;
+  type: string;
+  direction: "IN" | "OUT";
+  quantity: string;
+  unitCost?: string;
+  amount?: string;
+  balanceAfter: string;
+  sourceType: string;
+  sourceId?: string | null;
+  notes?: string | null;
+  occurredAt: string;
+  createdAt: string;
+  item: InventoryItem;
+  location: StockLocation;
+  actor?: { id: string; name: string } | null;
 };

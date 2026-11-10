@@ -13,15 +13,20 @@ import {
   LogOut,
   Menu,
   MoreHorizontal,
+  PackagePlus,
+  PackageSearch,
   PanelLeftClose,
   PanelLeftOpen,
+  Ruler,
   ReceiptText,
+  ScrollText,
   Settings,
   ShoppingBasket,
   Tags,
   Users,
   WalletCards,
   Warehouse,
+  MapPinned,
   type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -53,21 +58,53 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-type NavItem = { href: string; label: string; icon: LucideIcon };
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  exact?: boolean;
+};
+type NavGroup = { label: string; items: NavItem[] };
+type TenantNavItem = NavItem & { roles: Exclude<Role, "SUPER_ADMIN">[] };
 
-const nav: Array<NavItem & { roles: Exclude<Role, "SUPER_ADMIN">[] }> = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["OWNER", "MANAGER"] },
-  { href: "/pos", label: "Kasir", icon: ShoppingBasket, roles: ["OWNER", "MANAGER", "CASHIER"] },
-  { href: "/kitchen", label: "Dapur", icon: ChefHat, roles: ["OWNER", "MANAGER", "KITCHEN"] },
-  { href: "/transactions", label: "Transaksi", icon: ReceiptText, roles: ["OWNER", "MANAGER", "CASHIER"] },
-  { href: "/products", label: "Produk", icon: Boxes, roles: ["OWNER", "MANAGER"] },
-  { href: "/inventory", label: "Inventory", icon: Warehouse, roles: ["OWNER", "MANAGER"] },
-  { href: "/categories", label: "Kategori", icon: Tags, roles: ["OWNER", "MANAGER"] },
-  { href: "/options", label: "Opsi Menu", icon: ListChecks, roles: ["OWNER", "MANAGER"] },
-  { href: "/expenses", label: "Pengeluaran", icon: WalletCards, roles: ["OWNER", "MANAGER"] },
-  { href: "/reports", label: "Laporan", icon: BarChart3, roles: ["OWNER", "MANAGER"] },
-  { href: "/users", label: "Pengguna", icon: Users, roles: ["OWNER"] },
-  { href: "/settings", label: "Pengaturan", icon: Settings, roles: ["OWNER", "MANAGER"] },
+const navGroups: Array<{ label: string; items: TenantNavItem[] }> = [
+  {
+    label: "Operasional",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["OWNER", "MANAGER"] },
+      { href: "/pos", label: "Kasir", icon: ShoppingBasket, roles: ["OWNER", "MANAGER", "CASHIER"] },
+      { href: "/kitchen", label: "Dapur", icon: ChefHat, roles: ["OWNER", "MANAGER", "KITCHEN"] },
+      { href: "/transactions", label: "Transaksi", icon: ReceiptText, roles: ["OWNER", "MANAGER", "CASHIER"] },
+      { href: "/expenses", label: "Pengeluaran", icon: WalletCards, roles: ["OWNER", "MANAGER"] },
+    ],
+  },
+  {
+    label: "Inventory",
+    items: [
+      { href: "/inventory", label: "Ringkasan", icon: Warehouse, exact: true, roles: ["OWNER", "MANAGER"] },
+      { href: "/inventory/items", label: "Item stok", icon: PackageSearch, roles: ["OWNER", "MANAGER"] },
+      { href: "/inventory/locations", label: "Lokasi stok", icon: MapPinned, roles: ["OWNER", "MANAGER"] },
+      { href: "/inventory/units", label: "Satuan", icon: Ruler, roles: ["OWNER", "MANAGER"] },
+      { href: "/inventory/opening-balances", label: "Saldo awal", icon: PackagePlus, roles: ["OWNER"] },
+      { href: "/inventory/movements", label: "Kartu stok", icon: ScrollText, roles: ["OWNER", "MANAGER"] },
+    ],
+  },
+  {
+    label: "Master Data",
+    items: [
+      { href: "/products", label: "Produk", icon: Boxes, roles: ["OWNER", "MANAGER"] },
+      { href: "/categories", label: "Kategori", icon: Tags, roles: ["OWNER", "MANAGER"] },
+      { href: "/options", label: "Opsi Menu", icon: ListChecks, roles: ["OWNER", "MANAGER"] },
+    ],
+  },
+  {
+    label: "Laporan & Akses",
+    items: [
+      { href: "/reports", label: "Laporan", icon: BarChart3, roles: ["OWNER", "MANAGER"] },
+      { href: "/users", label: "Pengguna", icon: Users, roles: ["OWNER"] },
+      { href: "/settings", label: "Pengaturan", icon: Settings, roles: ["OWNER", "MANAGER"] },
+    ],
+  },
 ];
 const superAdminNav: NavItem[] = [
   { href: "/admin", label: "Kelola outlet", icon: Building2 },
@@ -100,8 +137,10 @@ function readSidebarPreference(): Exclude<SidebarMode, "auto"> | null {
   }
 }
 
-function isActive(path: string, href: string) {
-  return path === href || path.startsWith(`${href}/`);
+function isActive(path: string, item: NavItem) {
+  return item.exact
+    ? path === item.href
+    : path === item.href || path.startsWith(`${item.href}/`);
 }
 
 function initials(value: string) {
@@ -126,12 +165,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const mode: SidebarMode =
     sidebarPreference ?? (path === "/pos" ? "collapsed" : "auto");
 
-  const links: NavItem[] =
+  const groups: NavGroup[] =
     user?.role === "SUPER_ADMIN"
-      ? superAdminNav
-      : nav.filter((item) =>
-          item.roles.includes(user?.role as Exclude<Role, "SUPER_ADMIN">),
-        );
+      ? [{ label: "Administrasi", items: superAdminNav }]
+      : navGroups
+          .map((group) => ({
+            label: group.label,
+            items: group.items.filter((item) =>
+              item.roles.includes(user?.role as Exclude<Role, "SUPER_ADMIN">),
+            ),
+          }))
+          .filter((group) => group.items.length > 0);
+  const links = groups.flatMap((group) => group.items);
   const bottomLinks = links.filter((item) => bottomNavHrefs.includes(item.href));
   const showMoreButton = links.length > bottomLinks.length;
   // The POS page has its own fixed cart bar at the bottom on small screens.
@@ -199,10 +244,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   function navList(variant: "sidebar" | "drawer") {
     const rail = variant === "sidebar" && mode !== "expanded";
     return (
-      <ul className="space-y-1">
-        {links.map((item) => {
+      <div className="space-y-5">
+        {groups.map((group) => (
+          <section key={group.label}>
+            <p
+              className={cn(
+                "mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground",
+                rail && "lg:hidden",
+                rail && mode === "auto" && "xl:block",
+              )}
+            >
+              {group.label}
+            </p>
+            <ul className="space-y-1">
+              {group.items.map((item) => {
           const Icon = item.icon;
-          const active = isActive(path, item.href);
+          const active = isActive(path, item);
           const link = (
             <Link
               href={item.href}
@@ -235,8 +292,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </Tooltip>
             </li>
           );
-        })}
-      </ul>
+              })}
+            </ul>
+          </section>
+        ))}
+      </div>
     );
   }
 
@@ -408,7 +468,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             {bottomLinks.map((item) => {
               const Icon = item.icon;
-              const active = isActive(path, item.href);
+              const active = isActive(path, item);
               return (
                 <Link
                   key={item.href}
