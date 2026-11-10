@@ -1,17 +1,28 @@
 "use client";
 
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { Branding } from "@/lib/types";
+import {
+  applyBrandVars,
+  brandVars,
+  clearBrandVars,
+  DEFAULT_PRIMARY,
+  isHexColor,
+  THEME_STORAGE_KEY,
+} from "@/lib/theme";
+import type { Branding, TenantTheme } from "@/lib/types";
 import { useAuth } from "./auth-provider";
+
+export { contrastRatio, isHexColor, readableForeground } from "@/lib/theme";
 
 const fallbackBranding: Branding = {
   storeName: "DagoraApp",
   logoUrl: "/dagoraapp-logo.png",
   faviconUrl: "/dagoraapp-favicon.png",
-  primaryColor: "#4F46E5",
+  primaryColor: DEFAULT_PRIMARY,
 };
+
 const BrandingContext = createContext<Branding>(fallbackBranding);
 
 function versionedIconUrl(url: string) {
@@ -25,81 +36,90 @@ function versionedIconUrl(url: string) {
 export function BrandingProvider({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const query = useQuery({
-    queryKey: ["branding", user?.outletId],
-    queryFn: () => api<{ data: Branding }>("/settings"),
-    enabled: !loading && Boolean(user?.outletId),
+    queryKey: ["tenant-theme", user?.tenantId],
+    queryFn: () => api<{ data: TenantTheme }>("/settings/theme"),
+    enabled: !loading && Boolean(user?.tenantId),
     staleTime: 5 * 60_000,
     retry: 1,
   });
-  const merchantBranding = query.data?.data;
-  const branding: Branding = {
-    storeName: merchantBranding?.storeName ?? fallbackBranding.storeName,
-    logoUrl: merchantBranding?.logoUrl || fallbackBranding.logoUrl,
-    faviconUrl:
-      merchantBranding?.faviconUrl ||
-      merchantBranding?.logoUrl ||
-      fallbackBranding.faviconUrl,
-    primaryColor:
-      merchantBranding?.primaryColor ?? fallbackBranding.primaryColor,
-  };
+  // Errors fall through to the defaults: branding must never block the app.
+  const theme = user?.tenantId ? query.data?.data : undefined;
+  const storeName = theme?.tenantName ?? fallbackBranding.storeName;
+  const logoUrl = theme?.logoUrl || fallbackBranding.logoUrl;
+  const faviconUrl =
+    theme?.faviconUrl || theme?.logoUrl || fallbackBranding.faviconUrl;
+  const primaryColor = isHexColor(theme?.primaryColor)
+    ? theme.primaryColor
+    : fallbackBranding.primaryColor;
+  const tenantId = theme?.tenantId;
+  const tenantName = theme?.tenantName;
+  const tenantSlug = theme?.tenantSlug;
+  const signedOut = !loading && !user;
 
   useEffect(() => {
-    const sourceUrl = branding.faviconUrl || branding.logoUrl || "/favicon.ico";
+    const sourceUrl = faviconUrl || logoUrl || "/favicon.ico";
     const iconUrl = versionedIconUrl(sourceUrl);
     function applyIcons() {
-      const iconLinks = Array.from(
+      const links = Array.from(
         document.querySelectorAll<HTMLLinkElement>(
           'link[rel~="icon"], link[rel="apple-touch-icon"]',
         ),
       );
-
-      if (!iconLinks.length) {
+      if (!links.length) {
         const icon = document.createElement("link");
         icon.rel = "icon";
         document.head.appendChild(icon);
-        iconLinks.push(icon);
+        links.push(icon);
       }
-
-      for (const link of iconLinks) {
+      for (const link of links) {
         link.href = iconUrl;
         link.removeAttribute("type");
         link.removeAttribute("sizes");
-        link.dataset.dynamicBranding = "true";
-      }
-
-      if (!document.querySelector('link[rel="apple-touch-icon"]')) {
-        const touchIcon = document.createElement("link");
-        touchIcon.rel = "apple-touch-icon";
-        touchIcon.href = iconUrl;
-        touchIcon.dataset.dynamicBranding = "true";
-        document.head.appendChild(touchIcon);
       }
     }
-
     applyIcons();
     const observer = new MutationObserver(applyIcons);
     observer.observe(document.head, { childList: true });
     return () => observer.disconnect();
-  }, [branding.faviconUrl, branding.logoUrl]);
+  }, [faviconUrl, logoUrl]);
 
   useEffect(() => {
-    const color = branding.primaryColor;
-    const value = Number.parseInt(color.slice(1), 16);
-    const darken = (channel: number) => Math.max(0, Math.round(channel * 0.78));
-    const red = (value >> 16) & 255;
-    const green = (value >> 8) & 255;
-    const blue = value & 255;
-    const dark = `#${[darken(red), darken(green), darken(blue)]
-      .map((channel) => channel.toString(16).padStart(2, "0"))
-      .join("")}`;
-    document.documentElement.style.setProperty("--brand", color);
-    document.documentElement.style.setProperty("--brand-dark", dark);
-    document.documentElement.style.setProperty("--brand-rgb", `${red}, ${green}, ${blue}`);
-    document.title = `${branding.storeName} · DagoraApp`;
-  }, [branding.primaryColor, branding.storeName]);
+    const root = document.documentElement;
+    // Dark mode is deferred until every page uses tokens; clear any class a
+    // previous build may have left behind.
+    root.classList.remove("dark");
+    if (signedOut) {
+      // No previous tenant's colours may survive a logout or expired session.
+      localStorage.removeItem(THEME_STORAGE_KEY);
+      clearBrandVars();
+    } else if (tenantId) {
+      const vars = brandVars(primaryColor);
+      applyBrandVars(vars);
+      localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify({ tenantId, vars }));
+    }
+    // While auth or the theme is still loading, keep whatever the boot script
+    // applied so the colour does not flash.
+  }, [signedOut, tenantId, primaryColor]);
+
+  useEffect(() => {
+    document.title = `${storeName} · DagoraApp`;
+  }, [storeName]);
+
+  const context = useMemo<Branding>(
+    () => ({
+      storeName,
+      logoUrl,
+      faviconUrl,
+      primaryColor,
+      tenantId,
+      tenantName,
+      tenantSlug,
+    }),
+    [storeName, logoUrl, faviconUrl, primaryColor, tenantId, tenantName, tenantSlug],
+  );
 
   return (
-    <BrandingContext.Provider value={branding}>
+    <BrandingContext.Provider value={context}>
       {children}
     </BrandingContext.Provider>
   );

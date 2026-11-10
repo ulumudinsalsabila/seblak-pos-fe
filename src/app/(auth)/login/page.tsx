@@ -3,14 +3,16 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Flame, LoaderCircle } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
-import { ErrorNotice } from "@/components/ui";
+import { ErrorNotice } from "@/components/page-ui";
 import { useBranding } from "@/components/branding-provider";
+
+const EMAIL_DOMAIN = "@dagora.app";
 
 export default function LoginPage() {
   const { user, loading, login } = useAuth();
   const branding = useBranding();
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<unknown>();
   const [pending, setPending] = useState(false);
@@ -28,10 +30,12 @@ export default function LoginPage() {
   }, [loading, user, router]);
   async function submit(event: FormEvent) {
     event.preventDefault();
+    const cleanUsername = username.trim().toLowerCase();
+    if (!cleanUsername) return;
     setPending(true);
     setError(undefined);
     try {
-      const signedIn = await login(email, password);
+      const signedIn = await login(`${cleanUsername}${EMAIL_DOMAIN}`, password);
       router.replace(
         signedIn.role === "SUPER_ADMIN"
           ? "/admin"
@@ -103,20 +107,32 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-[#796c63]">
             Gunakan akun owner atau cashier yang aktif.
           </p>
-          <div className="mt-8 space-y-5">
-            <label>
-              <span className="label">EMAIL</span>
-              <input
-                className="field"
-                type="email"
-                autoComplete="email"
-                placeholder="nama@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+          <div className="mt-8 space-y-6">
+            <label className="grid gap-2">
+              <span className="label">NAMA AKUN</span>
+              <div className="relative">
+                <input
+                  className="field !pr-28"
+                  type="text"
+                  autoCapitalize="none"
+                  autoComplete="username"
+                  autoCorrect="off"
+                  placeholder="nama"
+                  value={username}
+                  onChange={(event) =>
+                    setUsername(
+                      event.target.value.replace(/\s/g, "").split("@")[0] ?? "",
+                    )
+                  }
+                  maxLength={254 - EMAIL_DOMAIN.length}
+                  required
+                />
+                <span className="pointer-events-none absolute inset-y-px right-px flex items-center rounded-r-[calc(var(--radius-md)-1px)] border-l border-[var(--input)] bg-[var(--muted)] px-3 text-sm font-semibold text-[var(--muted-foreground)]">
+                  {EMAIL_DOMAIN}
+                </span>
+              </div>
             </label>
-            <label>
+            <label className="grid gap-2">
               <span className="label">PASSWORD</span>
               <input
                 className="field"

@@ -3,42 +3,59 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
-  Building2,
   Boxes,
-  ChevronRight,
+  Building2,
   ChefHat,
+  ChevronsUpDown,
   Flame,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   Menu,
+  MoreHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
-  ListChecks,
   ReceiptText,
   Settings,
   ShoppingBasket,
   Tags,
   Users,
   WalletCards,
-  X,
+  type LucideIcon,
 } from "lucide-react";
 import { useState } from "react";
-import { clsx } from "clsx";
-import { useAuth } from "./auth-provider";
-import { useBranding } from "./branding-provider";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { OutletAccess } from "@/lib/types";
-import type { Role } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import type { OutletAccess, Role } from "@/lib/types";
+import { useAuth } from "./auth-provider";
+import { useBranding } from "./branding-provider";
 import { SearchSelect } from "./form-controls";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-const nav = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    roles: ["OWNER", "MANAGER"],
-  },
+type NavItem = { href: string; label: string; icon: LucideIcon };
+
+const nav: Array<NavItem & { roles: Exclude<Role, "SUPER_ADMIN">[] }> = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["OWNER", "MANAGER"] },
   { href: "/pos", label: "Kasir", icon: ShoppingBasket, roles: ["OWNER", "MANAGER", "CASHIER"] },
   { href: "/kitchen", label: "Dapur", icon: ChefHat, roles: ["OWNER", "MANAGER", "KITCHEN"] },
   { href: "/transactions", label: "Transaksi", icon: ReceiptText, roles: ["OWNER", "MANAGER", "CASHIER"] },
@@ -50,163 +67,282 @@ const nav = [
   { href: "/users", label: "Pengguna", icon: Users, roles: ["OWNER"] },
   { href: "/settings", label: "Pengaturan", icon: Settings, roles: ["OWNER", "MANAGER"] },
 ];
-const superAdminNav = [
+const superAdminNav: NavItem[] = [
   { href: "/admin", label: "Kelola outlet", icon: Building2 },
 ];
+/** At most four quick links on the phone bottom bar; the rest live in "Lainnya". */
+const bottomNavHrefs = ["/dashboard", "/pos", "/transactions", "/kitchen"];
+const roleLabels: Record<Role, string> = {
+  SUPER_ADMIN: "Super admin",
+  OWNER: "Pemilik",
+  MANAGER: "Manajer",
+  CASHIER: "Kasir",
+  KITCHEN: "Dapur",
+};
+
+/**
+ * Sidebar width on desktop (≥1024px):
+ * - "auto": icon rail on 1024–1279px, full sidebar from 1280px.
+ * - "collapsed" / "expanded": the user's explicit choice, kept in localStorage.
+ * The POS page defaults to the rail to leave room for the cart.
+ */
+type SidebarMode = "auto" | "collapsed" | "expanded";
+const SIDEBAR_STORAGE_KEY = "seblak-sidebar";
+
+function readSidebarPreference(): Exclude<SidebarMode, "auto"> | null {
+  try {
+    const value = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    return value === "collapsed" || value === "expanded" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function isActive(path: string, href: string) {
+  return path === href || path.startsWith(`${href}/`);
+}
+
+function initials(value: string) {
+  return value
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout, switchOutlet } = useAuth();
   const branding = useBranding();
   const path = usePathname();
   const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [sidebarOverride, setSidebarOverride] = useState<{
-    path: string;
-    expanded: boolean;
-  } | null>(null);
-  const sidebarExpanded =
-    sidebarOverride?.path === path ? sidebarOverride.expanded : path !== "/pos";
-  const links = user?.role === "SUPER_ADMIN"
-    ? superAdminNav
-    : nav.filter((item) => item.roles.includes(user?.role as Exclude<Role, "SUPER_ADMIN">));
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  // AppShell only renders on the client after auth resolves (the dashboard
+  // layout shows a loader until then), so reading localStorage here cannot
+  // cause a hydration mismatch.
+  const [sidebarPreference, setSidebarPreference] = useState(readSidebarPreference);
+  const mode: SidebarMode =
+    sidebarPreference ?? (path === "/pos" ? "collapsed" : "auto");
+
+  const links: NavItem[] =
+    user?.role === "SUPER_ADMIN"
+      ? superAdminNav
+      : nav.filter((item) =>
+          item.roles.includes(user?.role as Exclude<Role, "SUPER_ADMIN">),
+        );
+  const bottomLinks = links.filter((item) => bottomNavHrefs.includes(item.href));
+  const showMoreButton = links.length > bottomLinks.length;
+  // The POS page has its own fixed cart bar at the bottom on small screens.
+  const showBottomNav = path !== "/pos" && bottomLinks.length > 0;
+
   const outlets = useQuery({
     queryKey: ["my-outlets", user?.id],
     queryFn: () => api<{ data: OutletAccess[] }>("/auth/outlets"),
     enabled: Boolean(user && user.role !== "SUPER_ADMIN"),
   });
+  const outletOptions = (outlets.data?.data ?? []).map(({ outlet }) => ({
+    value: outlet.id,
+    label: outlet.name,
+    description: outlet.code,
+  }));
+
+  function toggleSidebar() {
+    // From "auto" the rail/full state depends on the viewport; collapsing is
+    // the useful action on the common ≥1280px screens.
+    const next = mode === "collapsed" ? "expanded" : "collapsed";
+    setSidebarPreference(next);
+    try {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, next);
+    } catch {
+      // Storage can be unavailable (private mode); the toggle still works.
+    }
+  }
+
   async function signOut() {
     await logout();
     router.replace("/login");
   }
+
+  const displayName = user?.name || user?.email || "";
+  const roleLabel = user ? roleLabels[user.role] : "";
+  const sidebarToggleLabel = mode === "collapsed" ? "Lebarkan sidebar" : "Ciutkan sidebar";
+
+  // Label visibility per mode (the rail shows icons only).
+  const labelClass =
+    mode === "expanded" ? "" : mode === "collapsed" ? "lg:hidden" : "lg:hidden xl:inline";
+  // In "auto" the full sidebar from 1280px already shows labels.
+  const railTooltipClass = mode === "auto" ? "xl:hidden" : "";
+
+  function brand(variant: "sidebar" | "drawer") {
+    return (
+      <Link
+        href={links[0]?.href ?? "/"}
+        onClick={() => setDrawerOpen(false)}
+        className="flex min-w-0 items-center gap-3 rounded-lg font-bold text-sidebar-foreground"
+      >
+        <span
+          className="grid size-9 shrink-0 place-items-center rounded-lg bg-sidebar-primary bg-contain bg-center bg-no-repeat text-sidebar-primary-foreground"
+          style={branding.logoUrl ? { backgroundImage: `url(${branding.logoUrl})` } : undefined}
+          aria-hidden
+        >
+          {!branding.logoUrl && <Flame className="size-5" />}
+        </span>
+        <span className={cn("truncate", variant === "sidebar" && labelClass)}>
+          {branding.storeName}
+        </span>
+      </Link>
+    );
+  }
+
+  function navList(variant: "sidebar" | "drawer") {
+    const rail = variant === "sidebar" && mode !== "expanded";
+    return (
+      <ul className="space-y-1">
+        {links.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(path, item.href);
+          const link = (
+            <Link
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+              aria-label={rail ? item.label : undefined}
+              onClick={() => setDrawerOpen(false)}
+              className={cn(
+                "flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+                rail && "lg:justify-center lg:px-0",
+                rail && mode === "auto" && "xl:justify-start xl:px-3",
+                active
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              )}
+            >
+              <Icon className="size-[18px] shrink-0" aria-hidden />
+              <span className={cn("truncate", variant === "sidebar" && labelClass)}>
+                {item.label}
+              </span>
+            </Link>
+          );
+          if (!rail) return <li key={item.href}>{link}</li>;
+          return (
+            <li key={item.href}>
+              <Tooltip>
+                <TooltipTrigger asChild>{link}</TooltipTrigger>
+                <TooltipContent side="right" className={railTooltipClass}>
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
+  function accountBlock(variant: "sidebar" | "drawer") {
+    const rail = variant === "sidebar" && mode !== "expanded";
+    return (
+      <div className="border-t border-sidebar-border pt-3">
+        <div className={cn("mb-2 min-w-0 px-1", variant === "sidebar" && labelClass)}>
+          <p className="truncate text-sm font-semibold text-sidebar-foreground">{displayName}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {roleLabel}
+            {user?.outletName ? ` · ${user.outletName}` : ""}
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={signOut}
+          aria-label="Keluar"
+          className={cn(
+            "w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent",
+            rail && "lg:justify-center",
+            rail && mode === "auto" && "xl:justify-start",
+          )}
+        >
+          <LogOut className="size-4" aria-hidden />
+          <span className={cn(variant === "sidebar" && labelClass)}>Keluar</span>
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={clsx(
-        "min-h-screen lg:grid",
-        sidebarExpanded
-          ? "lg:grid-cols-[250px_1fr]"
-          : "lg:grid-cols-[88px_1fr]",
-      )}
-    >
+    <div className="min-h-dvh lg:flex">
+      {/* Desktop sidebar (≥1024px) */}
       <aside
-        className={clsx(
-          "no-print fixed inset-y-0 left-0 z-40 w-[270px] bg-[#0f172a] p-5 text-white shadow-2xl shadow-slate-950/20 transition-all duration-300 lg:sticky lg:top-0 lg:h-screen lg:w-auto lg:translate-x-0",
-          mobileOpen ? "translate-x-0" : "-translate-x-full",
-          sidebarExpanded ? "lg:p-5" : "lg:p-4",
+        aria-label="Navigasi utama"
+        className={cn(
+          "no-print sticky top-0 hidden h-dvh shrink-0 flex-col gap-6 border-r border-sidebar-border bg-sidebar p-3 transition-[width] duration-200 lg:flex",
+          mode === "expanded" && "lg:w-64",
+          mode === "collapsed" && "lg:w-[72px]",
+          mode === "auto" && "lg:w-[72px] xl:w-64",
         )}
       >
         <div
-          className={clsx(
-            "mb-8 flex items-center",
-            sidebarExpanded ? "justify-between" : "lg:justify-center",
+          className={cn(
+            "px-1 pt-1",
+            mode !== "expanded" && "lg:flex lg:justify-center lg:px-0",
+            mode === "auto" && "xl:block xl:px-1",
           )}
         >
-          <Link href="/pos" className="flex items-center gap-3 font-black">
-            <span
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--brand)] bg-contain bg-center bg-no-repeat text-white"
-              style={
-                branding.logoUrl
-                  ? { backgroundImage: `url(${branding.logoUrl})` }
-                  : undefined
-              }
-            >
-              {!branding.logoUrl && <Flame size={20} />}
-            </span>
-            <span className={clsx(!sidebarExpanded && "lg:hidden")}>
-              {branding.storeName}
-            </span>
-          </Link>
-          <button className="lg:hidden" onClick={() => setMobileOpen(false)}>
-            <X />
-          </button>
+          {brand("sidebar")}
         </div>
-        <nav className="space-y-1">
-          {links.map((item) => {
-            const Icon = item.icon;
-            const active =
-              path === item.href || path.startsWith(`${item.href}/`);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                title={!sidebarExpanded ? item.label : undefined}
-                onClick={() => setMobileOpen(false)}
-                className={clsx(
-                  "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold transition",
-                  !sidebarExpanded && "lg:justify-center lg:px-2",
-                  active
-                    ? "bg-[var(--brand)] text-white"
-                    : "text-slate-300 hover:bg-white/10 hover:text-white",
-                )}
-              >
-                <Icon size={19} />
-                <span className={clsx(!sidebarExpanded && "lg:hidden")}>
-                  {item.label}
-                </span>
-                {active && sidebarExpanded && (
-                  <ChevronRight className="ml-auto" size={15} />
-                )}
-              </Link>
-            );
-          })}
+        <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto">
+          {navList("sidebar")}
         </nav>
-        <div
-          className={clsx(
-            "absolute bottom-5 rounded-xl border border-white/10 bg-white/5 p-3",
-            sidebarExpanded ? "left-5 right-5" : "left-4 right-4 lg:px-2",
-          )}
-        >
-          <div className={clsx(!sidebarExpanded && "lg:hidden")}>
-            <p className="truncate text-sm font-bold">{user?.email}</p>
-            <p className="mt-1 text-xs text-slate-400">{user?.role}</p>
-          </div>
-          <button
-            onClick={signOut}
-            title="Keluar"
-            className={clsx(
-              "flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-white",
-              sidebarExpanded ? "mt-3" : "lg:mx-auto",
-            )}
-          >
-            <LogOut size={14} />
-            <span className={clsx(!sidebarExpanded && "lg:hidden")}>
-              Keluar
-            </span>
-          </button>
-        </div>
+        {accountBlock("sidebar")}
       </aside>
-      {mobileOpen && (
-        <button
-          aria-label="Tutup menu"
-          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-      <div className="min-w-0">
-        <header className="no-print sticky top-0 z-20 flex h-16 items-center border-b border-slate-200 bg-slate-50/90 px-4 backdrop-blur sm:px-6">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="rounded-xl border border-[#eadfd3] bg-white p-2 lg:hidden"
+
+      {/* Drawer for <1024px */}
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <SheetContent
+          side="left"
+          className="no-print flex w-[280px] flex-col gap-6 bg-sidebar p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:max-w-[280px]"
+        >
+          <SheetTitle className="sr-only">Menu navigasi</SheetTitle>
+          <SheetDescription className="sr-only">
+            Pilih halaman yang ingin dibuka.
+          </SheetDescription>
+          {brand("drawer")}
+          <nav aria-label="Menu" className="min-h-0 flex-1 overflow-y-auto">
+            {navList("drawer")}
+          </nav>
+          {accountBlock("drawer")}
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="no-print sticky top-0 z-30 flex min-h-14 flex-wrap items-center gap-2 border-b border-border bg-background/95 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-sm sm:px-5">
+          <Button
+            variant="outline"
+            size="icon"
+            className="lg:hidden"
+            aria-label="Buka menu"
+            onClick={() => setDrawerOpen(true)}
           >
-            <Menu />
-          </button>
-          <button
-            onClick={() =>
-              setSidebarOverride({ path, expanded: !sidebarExpanded })
-            }
-            className="hidden rounded-xl border border-[#eadfd3] bg-white p-2 lg:block"
-            title={sidebarExpanded ? "Tutup sidebar" : "Buka sidebar"}
-          >
-            {sidebarExpanded ? <PanelLeftClose /> : <PanelLeftOpen />}
-          </button>
-          <span className="ml-3 font-black">{branding.storeName} POS</span>
-          {(outlets.data?.data.length ?? 0) > 1 && (
+            <Menu aria-hidden />
+          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden lg:inline-flex"
+                aria-label={sidebarToggleLabel}
+                onClick={toggleSidebar}
+              >
+                {mode === "collapsed" ? <PanelLeftOpen aria-hidden /> : <PanelLeftClose aria-hidden />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{sidebarToggleLabel}</TooltipContent>
+          </Tooltip>
+          <span className="min-w-0 truncate font-semibold lg:hidden">{branding.storeName}</span>
+          {outletOptions.length > 1 && (
             <SearchSelect
-              className="ml-3 hidden w-52 sm:block"
+              className="order-last w-full sm:order-none sm:w-56"
               value={user?.outletId ?? ""}
-              options={(outlets.data?.data ?? []).map(({ outlet }) => ({
-                value: outlet.id,
-                label: outlet.name,
-                description: outlet.code,
-              }))}
+              options={outletOptions}
               searchPlaceholder="Cari outlet..."
               onChange={async (outletId) => {
                 await switchOutlet(outletId);
@@ -215,18 +351,90 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               }}
             />
           )}
-          <div className="ml-auto text-right">
-            <p className="text-sm font-black">
-              {user?.role.replaceAll("_", " ")}
-            </p>
-            <p className="hidden text-xs text-[#796c63] sm:block">
-              {user?.outletName ?? user?.email}
-            </p>
+          <div className="ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-10 gap-2 px-2" aria-label="Menu akun">
+                  <span
+                    className="grid size-8 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground"
+                    aria-hidden
+                  >
+                    {initials(displayName) || "?"}
+                  </span>
+                  <span className="hidden min-w-0 text-left sm:block">
+                    <span className="block max-w-40 truncate text-sm font-semibold">{roleLabel}</span>
+                    <span className="block max-w-40 truncate text-xs font-normal text-muted-foreground">
+                      {user?.outletName ?? user?.email}
+                    </span>
+                  </span>
+                  <ChevronsUpDown className="hidden size-4 text-muted-foreground sm:block" aria-hidden />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-60">
+                <DropdownMenuLabel className="font-normal">
+                  <p className="truncate text-sm font-semibold">{displayName}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {roleLabel}
+                    {user?.outletName ? ` · ${user.outletName}` : ""}
+                  </p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => void signOut()}>
+                  <LogOut aria-hidden />
+                  Keluar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
-        <main className="mx-auto max-w-[1800px] p-4 sm:p-6 lg:p-7">
+
+        <main
+          className={cn(
+            "mx-auto w-full max-w-[1800px] flex-1 p-4 sm:p-6 lg:p-7",
+            showBottomNav && "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6 lg:pb-7",
+          )}
+        >
           {children}
         </main>
+
+        {/* Bottom navigation for phones (<768px) */}
+        {showBottomNav && (
+          <nav
+            aria-label="Navigasi cepat"
+            className="no-print fixed inset-x-0 bottom-0 z-30 flex min-h-16 border-t border-border bg-card px-2 pb-[env(safe-area-inset-bottom)] md:hidden"
+          >
+            {bottomLinks.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(path, item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-lg text-[11px] font-medium",
+                    active ? "text-primary-text" : "text-muted-foreground",
+                  )}
+                >
+                  <Icon className="size-5" aria-hidden />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })}
+            {showMoreButton && (
+              <button
+                type="button"
+                className="flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-lg text-[11px] font-medium text-muted-foreground"
+                onClick={() => setDrawerOpen(true)}
+                aria-haspopup="dialog"
+              >
+                <MoreHorizontal className="size-5" aria-hidden />
+                <span>Lainnya</span>
+              </button>
+            )}
+          </nav>
+        )}
       </div>
     </div>
   );

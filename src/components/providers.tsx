@@ -1,6 +1,8 @@
 "use client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./auth-provider";
 import { BrandingProvider } from "./branding-provider";
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -13,7 +15,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <AuthProvider>
-        <BrandingProvider>{children}</BrandingProvider>
+        <BrandingProvider>
+          <TooltipProvider delayDuration={300}>
+            {children}
+            <Toaster position="top-center" richColors closeButton />
+          </TooltipProvider>
+        </BrandingProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

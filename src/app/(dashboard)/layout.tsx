@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { AppShell } from "@/components/app-shell";
-import { Loading } from "@/components/ui";
+import { Loading } from "@/components/page-ui";
 export default function DashboardLayout({
   children,
 }: {

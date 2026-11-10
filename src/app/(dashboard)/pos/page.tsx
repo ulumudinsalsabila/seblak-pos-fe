@@ -18,7 +18,7 @@ import { api } from "@/lib/api";
 import { rupiah } from "@/lib/format";
 import type { Category, MenuOptionGroup, Product, SelectedMenuOption, Settings, Transaction } from "@/lib/types";
 import { KitchenReceipt, Receipt } from "@/components/receipt";
-import { ErrorNotice, Loading } from "@/components/ui";
+import { ErrorNotice, Loading } from "@/components/page-ui";
 
 type ItemOptions = {
   spicyLevel: number;

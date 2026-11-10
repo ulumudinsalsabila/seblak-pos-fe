@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { api, refreshAccessToken, setAccessToken } from "@/lib/api";
 import type { User } from "@/lib/types";
 type AuthContextValue = {
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scheduleRefresh = useCallback(function schedule(expiresIn: number) {
     if (refreshTimer.current) clearTimeout(refreshTimer.current);
@@ -68,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         setAccessToken(result.data.accessToken);
         scheduleRefresh(result.data.expiresIn);
+        queryClient.clear();
         const me = await api<{ data: User }>("/auth/me");
         setUser(me.data);
         return me.data;
@@ -79,6 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (refreshTimer.current) clearTimeout(refreshTimer.current);
           setAccessToken(null);
           setUser(null);
+          queryClient.clear();
         }
       },
       async switchOutlet(outletId) {
@@ -90,12 +94,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         setAccessToken(result.data.accessToken);
         scheduleRefresh(result.data.expiresIn);
+        // Cached queries are not keyed by outlet: drop them so the previous
+        // outlet's data cannot show under the new one.
+        queryClient.clear();
         const me = await api<{ data: User }>("/auth/me");
         setUser(me.data);
         return me.data;
       },
     }),
-    [user, loading, scheduleRefresh],
+    [user, loading, scheduleRefresh, queryClient],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
