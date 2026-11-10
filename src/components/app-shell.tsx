@@ -20,6 +20,7 @@ import {
   Tags,
   Users,
   WalletCards,
+  Warehouse,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -43,6 +44,7 @@ const nav = [
   { href: "/kitchen", label: "Dapur", icon: ChefHat, roles: ["OWNER", "MANAGER", "KITCHEN"] },
   { href: "/transactions", label: "Transaksi", icon: ReceiptText, roles: ["OWNER", "MANAGER", "CASHIER"] },
   { href: "/products", label: "Produk", icon: Boxes, roles: ["OWNER", "MANAGER"] },
+  { href: "/inventory", label: "Inventory", icon: Warehouse, roles: ["OWNER", "MANAGER"] },
   { href: "/categories", label: "Kategori", icon: Tags, roles: ["OWNER", "MANAGER"] },
   { href: "/options", label: "Opsi Menu", icon: ListChecks, roles: ["OWNER", "MANAGER"] },
   { href: "/expenses", label: "Pengeluaran", icon: WalletCards, roles: ["OWNER", "MANAGER"] },

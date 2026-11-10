@@ -124,3 +124,53 @@ export type Branding = Pick<
   Settings,
   "storeName" | "logoUrl" | "faviconUrl" | "primaryColor"
 >;
+
+export type InventoryUnit = {
+  id: string;
+  code: string;
+  name: string;
+  symbol: string;
+  dimension: "MASS" | "VOLUME" | "COUNT";
+  isBase: boolean;
+  factorToDimensionBase: string;
+  precision: number;
+};
+export type InventoryItem = {
+  id: string;
+  sku: string;
+  name: string;
+  type: "INGREDIENT" | "SEMI_FINISHED" | "PACKAGED";
+  reorderPoint: string;
+  isActive: boolean;
+  baseUnit: InventoryUnit;
+};
+export type StockLocation = {
+  id: string;
+  code: string;
+  name: string;
+  type: "WAREHOUSE" | "OUTLET" | "KITCHEN" | "OTHER";
+  isActive: boolean;
+  outlet?: { id: string; name: string; code: string } | null;
+};
+export type StockBalance = {
+  id: string;
+  quantity: string;
+  reservedQuantity: string;
+  averageUnitCost?: string;
+  updatedAt: string;
+  item: InventoryItem;
+  location: StockLocation;
+};
+export type InventoryOverview = {
+  activeItems: number;
+  activeLocations: number;
+  outOfStock: number;
+  lowStock: number;
+  movementCount: number;
+  totalStockValue?: string;
+  costCoverage: {
+    complete: boolean;
+    totalBalances: number;
+    missingCosts: number;
+  };
+};
