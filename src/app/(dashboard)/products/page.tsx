@@ -8,8 +8,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
-  ChevronLeft,
-  ChevronRight,
   ImagePlus,
   Pencil,
   Plus,
@@ -28,6 +26,7 @@ import {
   StatusBadge,
 } from "@/components/ui";
 import { SearchSelect } from "@/components/form-controls";
+import { DataTablePagination } from "@/components/list-controls";
 
 type ProductListResponse = {
   data: Product[];
@@ -45,10 +44,22 @@ const initialForm = {
   sku: "",
   pricingType: "FIXED",
   price: 15000,
+  // Optional numbers are kept as input text: "" means "not set" (sent as
+  // null), never 0, so a missing HPP cannot turn into a fake 100% margin.
+  unitCost: "",
   trackStock: false,
   stock: 0,
+  lowStockThreshold: "",
   imageUrl: "",
 };
+
+function optionalInt(value: string) {
+  return value.trim() === "" ? null : Number(value);
+}
+
+function inputValue(value: number | null | undefined) {
+  return value === null || value === undefined ? "" : String(value);
+}
 
 export default function ProductsPage() {
   const client = useQueryClient();
@@ -90,6 +101,10 @@ export default function ProductsPage() {
         body: JSON.stringify({
           ...form,
           stock: form.trackStock ? form.stock : undefined,
+          unitCost: optionalInt(form.unitCost),
+          lowStockThreshold: form.trackStock
+            ? optionalInt(form.lowStockThreshold)
+            : null,
         }),
       }),
     onSuccess: () => {
@@ -202,8 +217,10 @@ export default function ProductsPage() {
       sku: item.sku,
       pricingType: item.pricingType,
       price: item.price,
+      unitCost: inputValue(item.unitCost),
       trackStock: item.trackStock,
       stock: item.stock ?? 0,
+      lowStockThreshold: inputValue(item.lowStockThreshold),
       imageUrl: item.imageUrl ?? "",
     });
     setDialogOpen(true);
@@ -214,6 +231,8 @@ export default function ProductsPage() {
 
   const items = products.data?.data ?? [];
   const meta = products.data?.meta;
+  // The API omits unitCost for roles that may not see HPP.
+  const showCost = !items.length || items.some((item) => item.unitCost !== undefined);
 
   return (
     <>
@@ -296,6 +315,7 @@ export default function ProductsPage() {
                 <th className="p-4">PRODUK</th>
                 <th className="p-4">KATEGORI</th>
                 <th className="p-4">HARGA</th>
+                {showCost && <th className="p-4">HPP</th>}
                 <th className="p-4">STOK</th>
                 <th className="p-4">STATUS</th>
                 <th className="p-4"></th>
@@ -313,6 +333,7 @@ export default function ProductsPage() {
                   </td>
                   <td className="p-4">{item.category.name}</td>
                   <td className="p-4 font-black">{rupiah(item.price)}</td>
+                  {showCost && <td className="p-4">{item.unitCost === null || item.unitCost === undefined ? <span className="text-amber-700">Belum diisi</span> : rupiah(item.unitCost)}</td>}
                   <td className="p-4">{item.trackStock ? item.stock : "—"}</td>
                   <td className="p-4">
                     <StatusBadge
@@ -361,46 +382,7 @@ export default function ProductsPage() {
         {!items.length && !products.error && (
           <Empty>Tidak ada produk sesuai filter.</Empty>
         )}
-        {meta && meta.totalPages > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#eadfd3] bg-[#fffdfa] px-4 py-3">
-            <p className="text-sm text-[#796c63]">
-              Halaman <b className="text-[#241c17]">{meta.page}</b> dari{" "}
-              <b className="text-[#241c17]">{meta.totalPages}</b>
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="btn-ghost flex items-center gap-1"
-                disabled={filters.page <= 1 || products.isFetching}
-                onClick={() =>
-                  setFilters((value) => ({
-                    ...value,
-                    page: Math.max(1, value.page - 1),
-                  }))
-                }
-              >
-                <ChevronLeft size={17} />
-                Sebelumnya
-              </button>
-              <button
-                type="button"
-                className="btn-ghost flex items-center gap-1"
-                disabled={
-                  filters.page >= meta.totalPages || products.isFetching
-                }
-                onClick={() =>
-                  setFilters((value) => ({
-                    ...value,
-                    page: Math.min(meta.totalPages, value.page + 1),
-                  }))
-                }
-              >
-                Berikutnya
-                <ChevronRight size={17} />
-              </button>
-            </div>
-          </div>
-        )}
+        {meta && <DataTablePagination {...meta} disabled={products.isFetching} onPageChange={(page) => setFilters((value) => ({ ...value, page }))} onLimitChange={(limit) => setFilters((value) => ({ ...value, limit, page: 1 }))} />}
       </section>
       {remove.error && <div className="mt-4"><ErrorNotice error={remove.error} /></div>}
 
@@ -426,7 +408,7 @@ export default function ProductsPage() {
                 <p className="mt-1 text-sm text-[#796c63]">
                   {editingProduct
                     ? "Perbarui informasi produk yang dipilih."
-                    : "Tambahkan produk ke katalog Saung Sunja."}
+                    : "Tambahkan produk ke katalog."}
                 </p>
               </div>
               <button
@@ -564,6 +546,25 @@ export default function ProductsPage() {
                   />
                 </label>
               </div>
+              {showCost && (
+                <label>
+                  <span className="label">HPP PER UNIT (OPSIONAL)</span>
+                  <input
+                    className="field"
+                    type="number"
+                    min={0}
+                    max={100_000_000}
+                    placeholder="Kosongkan jika belum diketahui"
+                    value={form.unitCost}
+                    onChange={(event) =>
+                      setForm({ ...form, unitCost: event.target.value })
+                    }
+                  />
+                  <span className="mt-1 block text-xs text-[#796c63]">
+                    Dipakai untuk laba kotor di dashboard. Biarkan kosong bila belum pasti.
+                  </span>
+                </label>
+              )}
               <label className="flex items-center gap-3 rounded-xl border border-[#eadfd3] bg-[#fff8f1] p-4 text-sm font-bold">
                 <input
                   type="checkbox"
@@ -575,8 +576,9 @@ export default function ProductsPage() {
                 Pantau stok produk
               </label>
               {form.trackStock && (
+                <div className="grid gap-4 sm:grid-cols-2">
                 <label>
-                  <span className="label">STOK AWAL</span>
+                  <span className="label">STOK</span>
                   <input
                     className="field"
                     type="number"
@@ -588,6 +590,20 @@ export default function ProductsPage() {
                     }
                   />
                 </label>
+                <label>
+                  <span className="label">AMBANG STOK MENIPIS</span>
+                  <input
+                    className="field"
+                    type="number"
+                    min={0}
+                    placeholder="Opsional"
+                    value={form.lowStockThreshold}
+                    onChange={(event) =>
+                      setForm({ ...form, lowStockThreshold: event.target.value })
+                    }
+                  />
+                </label>
+                </div>
               )}
               {uploadImage.error && <ErrorNotice error={uploadImage.error} />}
               {save.error && <ErrorNotice error={save.error} />}

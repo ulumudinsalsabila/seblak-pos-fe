@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Role, User } from "@/lib/types";
@@ -13,6 +13,7 @@ import {
   StatusBadge,
 } from "@/components/ui";
 import { SearchSelect } from "@/components/form-controls";
+import { DataTablePagination, SearchInput } from "@/components/list-controls";
 
 type UserForm = {
   name: string;
@@ -33,10 +34,18 @@ export default function UsersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form, setForm] = useState<UserForm>(emptyForm);
+  const [filters, setFilters] = useState({ search: "", role: "", status: "", page: 1, limit: 10 });
 
   const query = useQuery({
-    queryKey: ["users"],
-    queryFn: () => api<{ data: User[] }>("/users"),
+    queryKey: ["users", filters],
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(filters.page), limit: String(filters.limit) });
+      if (filters.search) params.set("search", filters.search);
+      if (filters.role) params.set("role", filters.role);
+      if (filters.status) params.set("status", filters.status);
+      return api<{ data: User[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(`/users?${params}`);
+    },
+    placeholderData: keepPreviousData,
   });
 
   const save = useMutation({
@@ -106,9 +115,6 @@ export default function UsersPage() {
     save.mutate();
   }
 
-  if (query.isLoading) return <Loading />;
-  if (query.error) return <ErrorNotice error={query.error} />;
-
   return (
     <>
       <PageHeader
@@ -126,7 +132,15 @@ export default function UsersPage() {
         }
       />
 
+      <section className="card mb-5 grid gap-3 p-4 md:grid-cols-[1fr_180px_180px]">
+        <SearchInput value={filters.search} placeholder="Cari nama atau email..." onChange={(search) => setFilters((current) => ({ ...current, search, page: 1 }))} />
+        <SearchSelect value={filters.role} clearable placeholder="Semua role" options={[{ value: "OWNER", label: "Owner" }, { value: "MANAGER", label: "Manager" }, { value: "CASHIER", label: "Kasir" }, { value: "KITCHEN", label: "Dapur" }]} onChange={(role) => setFilters((current) => ({ ...current, role, page: 1 }))} />
+        <SearchSelect value={filters.status} clearable placeholder="Semua status" options={[{ value: "ACTIVE", label: "Aktif" }, { value: "INACTIVE", label: "Nonaktif" }]} onChange={(status) => setFilters((current) => ({ ...current, status, page: 1 }))} />
+      </section>
+
       <section className="card overflow-hidden">
+        {query.isLoading && <Loading />}
+        {query.error && <div className="p-4"><ErrorNotice error={query.error} /></div>}
         <div className="divide-y divide-[#f1e8df]">
           {query.data?.data.map((user) => (
             <div
@@ -176,7 +190,8 @@ export default function UsersPage() {
             </div>
           ))}
         </div>
-        {!query.data?.data.length && <Empty>Belum ada pengguna.</Empty>}
+        {query.data && !query.data.data.length && <Empty>{filters.search || filters.role || filters.status ? "Tidak ada pengguna yang cocok." : "Belum ada pengguna."}</Empty>}
+        {query.data?.meta && <DataTablePagination {...query.data.meta} disabled={query.isFetching} onPageChange={(page) => setFilters((current) => ({ ...current, page }))} onLimitChange={(limit) => setFilters((current) => ({ ...current, limit, page: 1 }))} />}
       </section>
       {remove.error && <div className="mt-4"><ErrorNotice error={remove.error} /></div>}
 

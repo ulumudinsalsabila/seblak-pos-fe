@@ -10,7 +10,6 @@ export const dateTime = (value: string) =>
     timeStyle: "short",
     timeZone: "Asia/Jakarta",
   }).format(new Date(value));
-export const localDate = () =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(
-    new Date(),
-  );
+/** Calendar date (YYYY-MM-DD) of an instant in Asia/Jakarta. */
+export const localDate = (date: Date = new Date()) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(date);

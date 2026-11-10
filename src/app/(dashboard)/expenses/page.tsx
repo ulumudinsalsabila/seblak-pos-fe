@@ -1,16 +1,25 @@
 "use client";
 import { FormEvent, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { localDate, rupiah } from "@/lib/format";
 import type { Expense } from "@/lib/types";
 import { Empty, ErrorNotice, Loading, PageHeader } from "@/components/ui";
+import { DataTablePagination, SearchInput } from "@/components/list-controls";
 export default function ExpensesPage() {
   const client = useQueryClient();
+  const [filters, setFilters] = useState({ search: "", dateFrom: "", dateTo: "", page: 1, limit: 10 });
   const query = useQuery({
-    queryKey: ["expenses"],
-    queryFn: () => api<{ data: Expense[] }>("/expenses"),
+    queryKey: ["expenses", filters],
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(filters.page), limit: String(filters.limit) });
+      if (filters.search) params.set("search", filters.search);
+      if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
+      if (filters.dateTo) params.set("dateTo", filters.dateTo);
+      return api<{ data: Expense[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(`/expenses?${params}`);
+    },
+    placeholderData: keepPreviousData,
   });
   const [form, setForm] = useState({
     description: "",
@@ -34,13 +43,17 @@ export default function ExpensesPage() {
     e.preventDefault();
     create.mutate();
   }
-  if (query.isLoading) return <Loading />;
   return (
     <>
       <PageHeader
         title="Pengeluaran"
         description="Catat arus keluar operasional outlet."
       />
+      <section className="card mb-5 grid gap-3 p-4 md:grid-cols-[1fr_180px_180px]">
+        <SearchInput value={filters.search} placeholder="Cari deskripsi atau catatan..." onChange={(search) => setFilters((current) => ({ ...current, search, page: 1 }))} />
+        <input aria-label="Tanggal awal" className="field" type="date" value={filters.dateFrom} onChange={(event) => setFilters((current) => ({ ...current, dateFrom: event.target.value, page: 1 }))} />
+        <input aria-label="Tanggal akhir" className="field" type="date" value={filters.dateTo} onChange={(event) => setFilters((current) => ({ ...current, dateTo: event.target.value, page: 1 }))} />
+      </section>
       <div className="grid gap-6 xl:grid-cols-[390px_1fr]">
         <form onSubmit={submit} className="card h-fit space-y-4 p-5">
           <h2 className="font-black">Catat pengeluaran</h2>
@@ -91,9 +104,14 @@ export default function ExpensesPage() {
             />
           </label>
           {create.error && <ErrorNotice error={create.error} />}
-          <button className="btn-primary w-full">Simpan pengeluaran</button>
+          <button className="btn-primary w-full" disabled={create.isPending}>
+            {create.isPending ? "Menyimpan..." : "Simpan pengeluaran"}
+          </button>
         </form>
         <section className="card overflow-hidden">
+          {query.isLoading && <Loading />}
+          {query.error && <div className="p-4"><ErrorNotice error={query.error} /></div>}
+          {remove.error && <div className="p-4"><ErrorNotice error={remove.error} /></div>}
           <div className="divide-y divide-[#f1e8df]">
             {query.data?.data.map((item) => (
               <div key={item.id} className="flex items-center gap-4 p-4">
@@ -105,16 +123,22 @@ export default function ExpensesPage() {
                 </div>
                 <b className="text-red-600">-{rupiah(item.amount)}</b>
                 <button
-                  aria-label="Hapus"
+                  type="button"
+                  aria-label={`Hapus pengeluaran ${item.description}`}
                   className="rounded-lg p-2 text-red-500 hover:bg-red-50"
-                  onClick={() => remove.mutate(item.id)}
+                  disabled={remove.isPending}
+                  onClick={() => {
+                    if (window.confirm(`Hapus pengeluaran ${item.description}?`))
+                      remove.mutate(item.id);
+                  }}
                 >
                   <Trash2 size={18} />
                 </button>
               </div>
             ))}
           </div>
-          {!query.data?.data.length && <Empty>Belum ada pengeluaran.</Empty>}
+          {query.data && !query.data.data.length && <Empty>{filters.search || filters.dateFrom || filters.dateTo ? "Tidak ada pengeluaran yang cocok." : "Belum ada pengeluaran."}</Empty>}
+          {query.data?.meta && <DataTablePagination {...query.data.meta} disabled={query.isFetching} onPageChange={(page) => setFilters((current) => ({ ...current, page }))} onLimitChange={(limit) => setFilters((current) => ({ ...current, limit, page: 1 }))} />}
         </section>
       </div>
     </>

@@ -1,15 +1,53 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #0f172a;
-  --muted: #64748b;
-  --cream: #f8fafc;
-  --paper: #fff;
-  --line: #e2e8f0;
-  --brand: #4f46e5;
-  --brand-dark: #4338ca;
-  --brand-rgb: 79, 70, 229;
+  --background: #f6f7fb;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --primary: #c2410c;
+  --primary-foreground: #ffffff;
+  --secondary: #44403c;
+  --muted-surface: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #fff7ed;
+  --accent-foreground: #9a3412;
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #cbd5e1;
+  --ring: #c2410c;
+  --sidebar: #111827;
+  --sidebar-foreground: #e5e7eb;
+  --success: #15803d;
+  --warning: #b45309;
+  --chart-1: #c2410c;
+  --chart-2: #0f766e;
+  --chart-3: #0891b2;
+  --chart-4: #059669;
+  --chart-5: #d97706;
+  --chart-6: #db2777;
+  --ink: var(--foreground);
+  --muted: var(--muted-foreground);
+  --cream: var(--background);
+  --paper: var(--card);
+  --line: var(--border);
+  --brand: #c2410c;
+  --brand-dark: #9a3412;
+  --brand-rgb: 194, 65, 12;
   --leaf: #477a52;
+}
+.dark {
+  --background: #0b1020;
+  --foreground: #e5e7eb;
+  --card: #111827;
+  --card-foreground: #f8fafc;
+  --muted-surface: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e1b4b;
+  --accent-foreground: #e0e7ff;
+  --border: #293548;
+  --input: #475569;
+  --sidebar: #060b16;
 }
 * {
   box-sizing: border-box;
@@ -19,15 +57,10 @@ html {
 }
 body {
   margin: 0;
-  background:
-    radial-gradient(
-      circle at 12% 8%,
-      rgba(99, 102, 241, 0.12),
-      transparent 24rem
-    ),
-    var(--cream);
+  background: var(--background);
   color: var(--ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
 }
 button,
 input,
@@ -39,13 +72,18 @@ button {
   cursor: pointer;
 }
 ::selection {
-  background: #c7d2fe;
+  background: rgba(var(--brand-rgb), 0.24);
+}
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--ring) 36%, transparent);
+  outline-offset: 2px;
 }
 .card {
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--card);
+  color: var(--card-foreground);
   border: 1px solid var(--line);
-  border-radius: 1.25rem;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.055);
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
 }
 .field {
   display: block;
@@ -53,7 +91,8 @@ button {
   min-height: 3rem;
   border: 1px solid var(--line);
   border-radius: 0.8rem;
-  background: white;
+  background: var(--card);
+  color: var(--foreground);
   padding: 0.72rem 0.85rem;
   outline: none;
   transition: 0.2s;
@@ -90,7 +129,7 @@ label:has(> .field) > .label {
   border: 0;
   border-radius: 0.85rem;
   background: var(--brand);
-  color: white;
+  color: var(--primary-foreground);
   font-weight: 800;
   padding: 0.78rem 1rem;
   transition: 0.2s;
@@ -107,10 +146,20 @@ label:has(> .field) > .label {
 .btn-ghost {
   border: 1px solid var(--line);
   border-radius: 0.85rem;
-  background: white;
+  background: var(--card);
   color: var(--ink);
   font-weight: 700;
   padding: 0.72rem 1rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 /* Compatibility layer for existing POS screens while outlet branding is dynamic. */
 .text-\[\#e7562c\] {

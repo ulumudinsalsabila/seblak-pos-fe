@@ -28,7 +28,10 @@ export type Product = {
   sku: string;
   pricingType: "FIXED" | "PER_ITEM";
   price: number;
+  /** HPP; omitted by the API for cashier/kitchen, null when not set. */
+  unitCost?: number | null;
   stock: number | null;
+  lowStockThreshold?: number | null;
   trackStock: boolean;
   imageUrl?: string;
   isActive: boolean;
@@ -123,4 +126,18 @@ export type Settings = {
 export type Branding = Pick<
   Settings,
   "storeName" | "logoUrl" | "faviconUrl" | "primaryColor"
->;
+> & {
+  tenantId?: string;
+  tenantName?: string;
+  tenantSlug?: string;
+};
+
+export type TenantTheme = {
+  tenantId: string;
+  tenantName: string;
+  tenantSlug: string;
+  primaryColor: string;
+  logoUrl: string | null;
+  faviconUrl: string | null;
+  updatedAt: string | null;
+};
