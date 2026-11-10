@@ -107,8 +107,8 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-[#796c63]">
             Gunakan akun owner atau cashier yang aktif.
           </p>
-          <div className="mt-8 space-y-5">
-            <label>
+          <div className="mt-8 space-y-6">
+            <label className="grid gap-2">
               <span className="label">NAMA AKUN</span>
               <div className="relative">
                 <input
@@ -132,7 +132,7 @@ export default function LoginPage() {
                 </span>
               </div>
             </label>
-            <label>
+            <label className="grid gap-2">
               <span className="label">PASSWORD</span>
               <input
                 className="field"
