@@ -89,6 +89,8 @@ const navGroups: Array<{ label: string; items: TenantNavItem[] }> = [
       { href: "/inventory/items", label: "Item stok", icon: PackageSearch, roles: ["OWNER", "MANAGER"] },
       { href: "/inventory/recipes", label: "Resep & mapping", icon: CookingPot, roles: ["OWNER", "MANAGER"] },
       { href: "/inventory/menu-options", label: "Bahan opsi menu", icon: ListChecks, roles: ["OWNER", "MANAGER"] },
+      { href: "/inventory/prep-recipes", label: "Resep produksi", icon: CookingPot, roles: ["OWNER", "MANAGER"] },
+      { href: "/inventory/prep", label: "Produksi", icon: Flame, roles: ["OWNER", "MANAGER"] },
       { href: "/inventory/locations", label: "Lokasi stok", icon: MapPinned, roles: ["OWNER", "MANAGER"] },
       { href: "/inventory/units", label: "Satuan", icon: Ruler, roles: ["OWNER", "MANAGER"] },
       { href: "/inventory/opening-balances", label: "Saldo awal", icon: PackagePlus, roles: ["OWNER"] },

@@ -310,3 +310,32 @@ export type MenuOptionConsumptionGroup = {
   categoryIds: string[];
   values: Array<{ id: string; label: string; consumption: MenuOptionConsumptionRow[] }>;
 };
+export type PrepRecipe = {
+  id: string;
+  outputQuantity: string;
+  notes?: string | null;
+  lines: Array<{ id: string; quantity: string; item: InventoryItem }>;
+};
+export type PrepRecipeItem = InventoryItem & { recipe: PrepRecipe | null };
+export type PrepBatchStatus = "IN_PROGRESS" | "COMPLETED" | "VOIDED";
+export type PrepBatch = {
+  id: string;
+  status: PrepBatchStatus;
+  plannedQuantity: string;
+  actualQuantity?: string | null;
+  /** Absent without cost access; null when an input had no cost. */
+  inputCost?: string | null;
+  outputUnitCost?: string | null;
+  notes?: string | null;
+  startedAt: string;
+  completedAt?: string | null;
+  voidedAt?: string | null;
+  voidReason?: string | null;
+  voidDisposition?: "RESTOCK" | "WASTE" | null;
+  location: { id: string; name: string; code: string };
+  outputItem: InventoryItem;
+  startedBy?: { id: string; name: string } | null;
+  completedBy?: { id: string; name: string } | null;
+  voidedBy?: { id: string; name: string } | null;
+  inputs: Array<{ id: string; quantity: string; unitCost?: string | null; amount?: string | null; item: InventoryItem }>;
+};
