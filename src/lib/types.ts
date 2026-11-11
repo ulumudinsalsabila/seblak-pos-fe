@@ -203,6 +203,26 @@ export type InventoryOverview = {
     missingCosts: number;
   };
 };
+export type PurchaseReceipt = {
+  id: string;
+  supplierName: string;
+  referenceNo?: string | null;
+  notes?: string | null;
+  totalAmount?: string;
+  receivedAt: string;
+  location: { id: string; name: string; code: string };
+  createdBy?: { id: string; name: string } | null;
+  lines: Array<{
+    id: string;
+    inputQuantity: string;
+    inputUnitPrice?: string;
+    quantity: string;
+    unitCost?: string;
+    amount?: string;
+    item: InventoryItem;
+    unit: InventoryUnit;
+  }>;
+};
 export type StockMovement = {
   id: string;
   type: string;

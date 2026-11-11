@@ -18,6 +18,7 @@ const inventoryLinks = [
   { href: "/inventory/locations", label: "Lokasi", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/units", label: "Satuan", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/opening-balances", label: "Saldo awal", roles: ["OWNER"] },
+  { href: "/inventory/purchases", label: "Pembelian", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/movements", label: "Kartu stok", roles: ["OWNER", "MANAGER"] },
 ];
 
@@ -148,15 +149,14 @@ export const locationTypeLabel = {
 
 export const movementTypeLabel: Record<string, string> = {
   OPENING_BALANCE: "Saldo awal",
-  PURCHASE_RECEIPT: "Penerimaan pembelian",
-  SALE_CONSUMPTION: "Pemakaian penjualan",
-  ADJUSTMENT_IN: "Penyesuaian masuk",
-  ADJUSTMENT_OUT: "Penyesuaian keluar",
-  TRANSFER_OUT: "Transfer keluar",
-  TRANSFER_IN: "Transfer masuk",
-  PREPARATION_CONSUMPTION: "Pemakaian produksi",
-  PREPARATION_OUTPUT: "Hasil produksi",
-  WASTE: "Waste",
-  RETURN_IN: "Retur masuk",
-  RETURN_OUT: "Retur keluar",
+  PURCHASE_RECEIVED: "Penerimaan pembelian",
+  SALE_CONSUMED: "Pemakaian penjualan",
+  SALE_REVERSED: "Pembatalan penjualan",
+  PREP_ISSUED: "Pemakaian produksi",
+  PREP_RECEIVED: "Hasil produksi",
+  TRANSFER_SHIPPED: "Transfer keluar",
+  TRANSFER_RECEIVED: "Transfer masuk",
+  WASTE_POSTED: "Waste",
+  ADJUSTMENT_POSTED: "Penyesuaian",
+  STOCKTAKE_VARIANCE_POSTED: "Selisih stock opname",
 };
