@@ -25,6 +25,8 @@ const inventoryLinks = [
   { href: "/inventory/purchases", label: "Pembelian", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/adjustments", label: "Waste & penyesuaian", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/stocktakes", label: "Stock opname", roles: ["OWNER", "MANAGER"] },
+  { href: "/inventory/requests", label: "Request stok", roles: ["OWNER", "MANAGER"] },
+  { href: "/inventory/transfers", label: "Transfer", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/movements", label: "Kartu stok", roles: ["OWNER", "MANAGER"] },
 ];
 

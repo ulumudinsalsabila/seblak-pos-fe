@@ -339,3 +339,37 @@ export type PrepBatch = {
   voidedBy?: { id: string; name: string } | null;
   inputs: Array<{ id: string; quantity: string; unitCost?: string | null; amount?: string | null; item: InventoryItem }>;
 };
+type LocationRef = { id: string; name: string; code: string };
+export type StockRequestStatus = "SUBMITTED" | "APPROVED" | "REJECTED" | "CANCELLED" | "PARTIALLY_FULFILLED" | "FULFILLED";
+export type StockRequest = {
+  id: string;
+  status: StockRequestStatus;
+  notes?: string | null;
+  requestedAt: string;
+  reviewedAt?: string | null;
+  reviewNotes?: string | null;
+  sourceLocation: LocationRef;
+  destinationLocation: LocationRef;
+  requestedBy?: { id: string; name: string } | null;
+  reviewedBy?: { id: string; name: string } | null;
+  transfer?: { id: string; status: StockTransferStatus } | null;
+  lines: Array<{ id: string; quantity: string; approvedQuantity?: string | null; item: InventoryItem }>;
+};
+export type StockTransferStatus = "APPROVED" | "SHIPPED" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CANCELLED";
+export type StockTransfer = {
+  id: string;
+  status: StockTransferStatus;
+  notes?: string | null;
+  createdAt: string;
+  shippedAt?: string | null;
+  lastReceivedAt?: string | null;
+  closedAt?: string | null;
+  closeReason?: string | null;
+  sourceLocation: LocationRef;
+  destinationLocation: LocationRef;
+  createdBy?: { id: string; name: string } | null;
+  shippedBy?: { id: string; name: string } | null;
+  closedBy?: { id: string; name: string } | null;
+  request?: { id: string; status: StockRequestStatus } | null;
+  lines: Array<{ id: string; quantity: string; shippedQuantity: string; receivedQuantity: string; lostQuantity: string; unitCost?: string | null; item: InventoryItem }>;
+};
