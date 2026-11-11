@@ -13,6 +13,7 @@ import type {
   StockBalance,
   StockLocation,
 } from "@/lib/types";
+import { InventoryAlertsPanel } from "./alerts-panel";
 
 type Page<T> = {
   data: T[];
@@ -103,6 +104,8 @@ export default function InventoryPage() {
         ))}
       </section>
 
+      <InventoryAlertsPanel />
+
       <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {cards.map(({ label, value, icon: Icon }) => (
           <div className="card p-4 sm:p-5" key={label}>
@@ -123,6 +126,17 @@ export default function InventoryPage() {
                 : rupiah(Math.round(Number(summary.totalStockValue)))}
             </p>
           </div>
+          {!!summary.inTransit?.lines && (
+            <div>
+              <p className="font-black">Dalam perjalanan</p>
+              <p className="mt-1 text-sm text-[#796c63]">
+                {summary.inTransit.lines} baris transfer
+                {summary.inTransit.value !== undefined &&
+                  ` · ${rupiah(Math.round(Number(summary.inTransit.value)))}`}
+                , belum termasuk valuasi stok
+              </p>
+            </div>
+          )}
           <span
             className={`badge ${
               summary.costCoverage.complete

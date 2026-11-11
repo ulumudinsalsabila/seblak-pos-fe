@@ -196,6 +196,7 @@ export type InventoryOverview = {
   outOfStock: number;
   lowStock: number;
   movementCount: number;
+  inTransit?: { lines: number; value?: string };
   totalStockValue?: string;
   costCoverage: {
     complete: boolean;
@@ -372,4 +373,46 @@ export type StockTransfer = {
   closedBy?: { id: string; name: string } | null;
   request?: { id: string; status: StockRequestStatus } | null;
   lines: Array<{ id: string; quantity: string; shippedQuantity: string; receivedQuantity: string; lostQuantity: string; unitCost?: string | null; item: InventoryItem }>;
+};
+export type FoodCostReport = {
+  period: { from: string; to: string; outletId: string | null };
+  revenue: string;
+  transactionCount: number;
+  theoreticalCost: string;
+  wasteCost: string;
+  stocktakeCost: string;
+  adjustmentCost: string;
+  transferLossCost: string;
+  actualCost: string;
+  theoreticalFoodCostPercent: string | null;
+  actualFoodCostPercent: string | null;
+  purchaseSpend: string;
+  purchaseCount: number;
+  prep: { batches: number; yieldPercent: string | null; shrinkageCost: string };
+  costCoverage: { uncostedMovements: number; complete: boolean };
+  items: Array<{
+    itemId: string;
+    item: { id: string; name: string; sku: string; type: InventoryItem["type"]; baseUnit: { symbol: string; precision: number } } | null;
+    salesQuantity: string;
+    salesCost: string;
+    wasteQuantity: string;
+    wasteCost: string;
+    stocktakeQuantity: string;
+    stocktakeCost: string;
+    adjustmentQuantity: string;
+    adjustmentCost: string;
+    lossCost: string;
+    actualCost: string;
+  }>;
+};
+type StockAlertRow = { itemId: string; name: string; sku: string; unit: string; location: string; quantity: string; reorderPoint: string };
+export type InventoryAlerts = {
+  generatedAt: string;
+  outOfStock: StockAlertRow[];
+  lowStock: StockAlertRow[];
+  missingCost: number;
+  staleTransfers: Array<{ id: string; shippedAt: string; sourceLocation: { name: string }; destinationLocation: { name: string } }>;
+  staleBatches: Array<{ id: string; startedAt: string; outputItem: { name: string }; location: { name: string } }>;
+  pendingApprovals: { requests: number; stocktakes: number; unshippedTransfers: number };
+  priceAnomalies: Array<{ itemId: string; name: string; unit: string; changePercent: string; receivedAt: string; latestUnitCost?: string; previousUnitCost?: string }>;
 };
