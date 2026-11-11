@@ -2,10 +2,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  ArrowLeftRight,
   BarChart3,
   Boxes,
   Building2,
+  ChartPie,
   ChefHat,
+  ChevronDown,
   CookingPot,
   ChevronsUpDown,
   Flame,
@@ -14,6 +17,7 @@ import {
   LogOut,
   Menu,
   MoreHorizontal,
+  Package,
   PackageCheck,
   PackageMinus,
   Truck,
@@ -27,6 +31,7 @@ import {
   ScrollText,
   Settings,
   ShoppingBasket,
+  SlidersHorizontal,
   Tags,
   Users,
   WalletCards,
@@ -69,61 +74,125 @@ type NavItem = {
   icon: LucideIcon;
   exact?: boolean;
 };
-type NavGroup = { label: string; items: NavItem[] };
-type TenantNavItem = NavItem & { roles: Exclude<Role, "SUPER_ADMIN">[] };
+/** A collapsible entry grouping related pages; it has no page of its own. */
+type NavMenu = { id: string; label: string; icon: LucideIcon; children: NavItem[] };
+type NavEntry = NavItem | NavMenu;
+type NavGroup = { label: string; entries: NavEntry[] };
 
-const navGroups: Array<{ label: string; items: TenantNavItem[] }> = [
+type TenantRole = Exclude<Role, "SUPER_ADMIN">;
+type TenantNavItem = NavItem & { roles: TenantRole[] };
+type TenantNavMenu = Omit<NavMenu, "children"> & { children: TenantNavItem[] };
+
+const MANAGEMENT: TenantRole[] = ["OWNER", "MANAGER"];
+
+const navGroups: Array<{ label: string; entries: Array<TenantNavItem | TenantNavMenu> }> = [
   {
     label: "Operasional",
-    items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["OWNER", "MANAGER"] },
+    entries: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: MANAGEMENT },
       { href: "/pos", label: "Kasir", icon: ShoppingBasket, roles: ["OWNER", "MANAGER", "CASHIER"] },
       { href: "/kitchen", label: "Dapur", icon: ChefHat, roles: ["OWNER", "MANAGER", "KITCHEN"] },
       { href: "/transactions", label: "Transaksi", icon: ReceiptText, roles: ["OWNER", "MANAGER", "CASHIER"] },
-      { href: "/expenses", label: "Pengeluaran", icon: WalletCards, roles: ["OWNER", "MANAGER"] },
+      { href: "/expenses", label: "Pengeluaran", icon: WalletCards, roles: MANAGEMENT },
     ],
   },
   {
     label: "Inventory",
-    items: [
-      { href: "/inventory", label: "Ringkasan", icon: Warehouse, exact: true, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/reports", label: "Laporan food cost", icon: BarChart3, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/items", label: "Item stok", icon: PackageSearch, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/recipes", label: "Resep & mapping", icon: CookingPot, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/menu-options", label: "Bahan opsi menu", icon: ListChecks, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/prep-recipes", label: "Resep produksi", icon: CookingPot, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/prep", label: "Produksi", icon: Flame, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/locations", label: "Lokasi stok", icon: MapPinned, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/units", label: "Satuan", icon: Ruler, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/opening-balances", label: "Saldo awal", icon: PackagePlus, roles: ["OWNER"] },
-      { href: "/inventory/purchases", label: "Pembelian", icon: PackageCheck, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/adjustments", label: "Waste & penyesuaian", icon: PackageMinus, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/stocktakes", label: "Stock opname", icon: ClipboardCheck, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/requests", label: "Request stok", icon: ListChecks, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/transfers", label: "Transfer", icon: Truck, roles: ["OWNER", "MANAGER"] },
-      { href: "/inventory/movements", label: "Kartu stok", icon: ScrollText, roles: ["OWNER", "MANAGER"] },
+    entries: [
+      { href: "/inventory", label: "Ringkasan", icon: Warehouse, exact: true, roles: MANAGEMENT },
+      {
+        id: "inventory-stock",
+        label: "Stok",
+        icon: Package,
+        children: [
+          { href: "/inventory/items", label: "Item stok", icon: PackageSearch, roles: MANAGEMENT },
+          { href: "/inventory/movements", label: "Kartu stok", icon: ScrollText, roles: MANAGEMENT },
+          { href: "/inventory/opening-balances", label: "Saldo awal", icon: PackagePlus, roles: ["OWNER"] },
+        ],
+      },
+      {
+        id: "inventory-flow",
+        label: "Pembelian & pergerakan",
+        icon: ArrowLeftRight,
+        children: [
+          { href: "/inventory/purchases", label: "Pembelian", icon: PackageCheck, roles: MANAGEMENT },
+          { href: "/inventory/requests", label: "Request stok", icon: ListChecks, roles: MANAGEMENT },
+          { href: "/inventory/transfers", label: "Transfer", icon: Truck, roles: MANAGEMENT },
+          { href: "/inventory/adjustments", label: "Waste & penyesuaian", icon: PackageMinus, roles: MANAGEMENT },
+          { href: "/inventory/stocktakes", label: "Stock opname", icon: ClipboardCheck, roles: MANAGEMENT },
+        ],
+      },
+      {
+        id: "inventory-prep",
+        label: "Produksi",
+        icon: Flame,
+        children: [
+          { href: "/inventory/prep", label: "Batch produksi", icon: Flame, roles: MANAGEMENT },
+          { href: "/inventory/prep-recipes", label: "Resep produksi", icon: CookingPot, roles: MANAGEMENT },
+        ],
+      },
+      {
+        id: "inventory-recipes",
+        label: "Resep & mapping",
+        icon: CookingPot,
+        children: [
+          { href: "/inventory/recipes", label: "Resep produk", icon: CookingPot, roles: MANAGEMENT },
+          { href: "/inventory/menu-options", label: "Bahan opsi menu", icon: ListChecks, roles: MANAGEMENT },
+        ],
+      },
+      {
+        id: "inventory-setup",
+        label: "Pengaturan inventory",
+        icon: SlidersHorizontal,
+        children: [
+          { href: "/inventory/locations", label: "Lokasi stok", icon: MapPinned, roles: MANAGEMENT },
+          { href: "/inventory/units", label: "Satuan", icon: Ruler, roles: MANAGEMENT },
+        ],
+      },
     ],
   },
   {
-    label: "Master Data",
-    items: [
-      { href: "/products", label: "Produk", icon: Boxes, roles: ["OWNER", "MANAGER"] },
-      { href: "/categories", label: "Kategori", icon: Tags, roles: ["OWNER", "MANAGER"] },
-      { href: "/options", label: "Opsi Menu", icon: ListChecks, roles: ["OWNER", "MANAGER"] },
+    label: "Menu & Produk",
+    entries: [
+      { href: "/products", label: "Produk", icon: Boxes, roles: MANAGEMENT },
+      { href: "/categories", label: "Kategori", icon: Tags, roles: MANAGEMENT },
+      { href: "/options", label: "Opsi menu", icon: ListChecks, roles: MANAGEMENT },
     ],
   },
   {
-    label: "Laporan & Akses",
-    items: [
-      { href: "/reports", label: "Laporan", icon: BarChart3, roles: ["OWNER", "MANAGER"] },
+    label: "Laporan",
+    entries: [
+      { href: "/reports", label: "Laporan penjualan", icon: BarChart3, roles: MANAGEMENT },
+      { href: "/inventory/reports", label: "Laporan food cost", icon: ChartPie, roles: MANAGEMENT },
+    ],
+  },
+  {
+    label: "Akses & Pengaturan",
+    entries: [
       { href: "/users", label: "Pengguna", icon: Users, roles: ["OWNER"] },
-      { href: "/settings", label: "Pengaturan", icon: Settings, roles: ["OWNER", "MANAGER"] },
+      { href: "/settings", label: "Pengaturan", icon: Settings, roles: MANAGEMENT },
     ],
   },
 ];
 const superAdminNav: NavItem[] = [
   { href: "/admin", label: "Kelola outlet", icon: Building2 },
 ];
+
+const isMenu = (entry: NavEntry): entry is NavMenu => "children" in entry;
+
+/**
+ * Entries the role can open. A menu keeps only its permitted pages; a menu left with one page
+ * becomes that page, and an empty menu disappears.
+ */
+function visibleEntries(entries: Array<TenantNavItem | TenantNavMenu>, role: TenantRole): NavEntry[] {
+  return entries.flatMap((entry): NavEntry[] => {
+    if (!("children" in entry)) return entry.roles.includes(role) ? [entry] : [];
+    const children = entry.children.filter((child) => child.roles.includes(role));
+    if (children.length === 0) return [];
+    if (children.length === 1) return children;
+    return [{ ...entry, children }];
+  });
+}
 /** At most four quick links on the phone bottom bar; the rest live in "Lainnya". */
 const bottomNavHrefs = ["/dashboard", "/pos", "/transactions", "/kitchen"];
 const roleLabels: Record<Role, string> = {
@@ -149,6 +218,17 @@ function readSidebarPreference(): Exclude<SidebarMode, "auto"> | null {
     return value === "collapsed" || value === "expanded" ? value : null;
   } catch {
     return null;
+  }
+}
+
+const MENU_STORAGE_KEY = "seblak-sidebar-menus";
+
+function readMenuPreference(): Record<string, boolean> {
+  try {
+    const value = JSON.parse(localStorage.getItem(MENU_STORAGE_KEY) ?? "{}");
+    return value && typeof value === "object" ? value : {};
+  } catch {
+    return {};
   }
 }
 
@@ -182,16 +262,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const groups: NavGroup[] =
     user?.role === "SUPER_ADMIN"
-      ? [{ label: "Administrasi", items: superAdminNav }]
+      ? [{ label: "Administrasi", entries: superAdminNav }]
       : navGroups
           .map((group) => ({
             label: group.label,
-            items: group.items.filter((item) =>
-              item.roles.includes(user?.role as Exclude<Role, "SUPER_ADMIN">),
-            ),
+            entries: visibleEntries(group.entries, user?.role as TenantRole),
           }))
-          .filter((group) => group.items.length > 0);
-  const links = groups.flatMap((group) => group.items);
+          .filter((group) => group.entries.length > 0);
+  const links = groups.flatMap((group) =>
+    group.entries.flatMap((entry) => (isMenu(entry) ? entry.children : [entry])),
+  );
+  // Menus the user opened or closed; untouched menus are open only while they hold the current page.
+  const [menuPreference, setMenuPreference] = useState(readMenuPreference);
+  const menuOpen = (menu: NavMenu) =>
+    menuPreference[menu.id] ?? menu.children.some((child) => isActive(path, child));
+  function toggleMenu(menu: NavMenu) {
+    const next = { ...menuPreference, [menu.id]: !menuOpen(menu) };
+    setMenuPreference(next);
+    try {
+      localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Storage can be unavailable (private mode); the toggle still works.
+    }
+  }
   const bottomLinks = links.filter((item) => bottomNavHrefs.includes(item.href));
   const showMoreButton = links.length > bottomLinks.length;
   // The POS page has its own fixed cart bar at the bottom on small screens.
@@ -272,46 +365,163 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {group.label}
             </p>
             <ul className="space-y-1">
-              {group.items.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(path, item);
-          const link = (
-            <Link
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              aria-label={rail ? item.label : undefined}
-              onClick={() => setDrawerOpen(false)}
-              className={cn(
-                "flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
-                rail && "lg:justify-center lg:px-0",
-                rail && mode === "auto" && "xl:justify-start xl:px-3",
-                active
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              {group.entries.map((entry) =>
+                isMenu(entry) ? (
+                  <li key={entry.id}>{menuEntry(entry, variant)}</li>
+                ) : (
+                  <li key={entry.href}>{leafEntry(entry, variant)}</li>
+                ),
               )}
-            >
-              <Icon className="size-[18px] shrink-0" aria-hidden />
-              <span className={cn("truncate", variant === "sidebar" && labelClass)}>
-                {item.label}
-              </span>
-            </Link>
-          );
-          if (!rail) return <li key={item.href}>{link}</li>;
-          return (
-            <li key={item.href}>
-              <Tooltip>
-                <TooltipTrigger asChild>{link}</TooltipTrigger>
-                <TooltipContent side="right" className={railTooltipClass}>
-                  {item.label}
-                </TooltipContent>
-              </Tooltip>
-            </li>
-          );
-              })}
             </ul>
           </section>
         ))}
       </div>
+    );
+  }
+
+  function leafEntry(item: NavItem, variant: "sidebar" | "drawer") {
+    const rail = variant === "sidebar" && mode !== "expanded";
+    const Icon = item.icon;
+    const active = isActive(path, item);
+    const link = (
+      <Link
+        href={item.href}
+        aria-current={active ? "page" : undefined}
+        aria-label={rail ? item.label : undefined}
+        onClick={() => setDrawerOpen(false)}
+        className={cn(
+          "flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+          rail && "lg:justify-center lg:px-0",
+          rail && mode === "auto" && "xl:justify-start xl:px-3",
+          active
+            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        )}
+      >
+        <Icon className="size-[18px] shrink-0" aria-hidden />
+        <span className={cn("truncate", variant === "sidebar" && labelClass)}>
+          {item.label}
+        </span>
+      </Link>
+    );
+    if (!rail) return link;
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{link}</TooltipTrigger>
+        <TooltipContent side="right" className={railTooltipClass}>
+          {item.label}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  /**
+   * A menu is an accordion when labels show, and a flyout from its icon on the rail. In "auto" mode the
+   * sidebar is a rail on 1024–1279px and full from 1280px, so both are rendered and CSS picks one.
+   */
+  function menuEntry(menu: NavMenu, variant: "sidebar" | "drawer") {
+    const Icon = menu.icon;
+    const open = menuOpen(menu);
+    const holdsActive = menu.children.some((child) => isActive(path, child));
+    const panelId = `nav-menu-${variant}-${menu.id}`;
+    const showAccordion = variant === "drawer" || mode !== "collapsed";
+    const showFlyout = variant === "sidebar" && mode !== "expanded";
+
+    const accordion = (
+      <div className={cn(variant === "sidebar" && mode === "auto" && "hidden xl:block")}>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => toggleMenu(menu)}
+          className={cn(
+            "flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium transition-colors",
+            holdsActive && !open
+              ? "bg-sidebar-accent text-sidebar-accent-foreground"
+              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          )}
+        >
+          <Icon className="size-[18px] shrink-0" aria-hidden />
+          <span className="min-w-0 flex-1 truncate">{menu.label}</span>
+          <ChevronDown
+            className={cn("size-4 shrink-0 text-muted-foreground transition-transform duration-200", open && "rotate-180")}
+            aria-hidden
+          />
+        </button>
+        {open && (
+          <ul id={panelId} className="ml-[21px] mt-1 space-y-1 border-l border-sidebar-border pl-3">
+            {menu.children.map((child) => {
+              const active = isActive(path, child);
+              return (
+                <li key={child.href}>
+                  <Link
+                    href={child.href}
+                    aria-current={active ? "page" : undefined}
+                    onClick={() => setDrawerOpen(false)}
+                    className={cn(
+                      "flex min-h-9 items-center rounded-lg px-3 text-sm transition-colors",
+                      active
+                        ? "bg-sidebar-primary font-medium text-sidebar-primary-foreground"
+                        : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    )}
+                  >
+                    <span className="truncate">{child.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    );
+
+    const flyout = (
+      <div className={cn(mode === "auto" && "xl:hidden")}>
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={menu.label}
+                  className={cn(
+                    "flex min-h-10 w-full items-center justify-center rounded-lg transition-colors",
+                    holdsActive
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  )}
+                >
+                  <Icon className="size-[18px] shrink-0" aria-hidden />
+                </button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="right">{menu.label}</TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent side="right" align="start" className="w-56">
+            <DropdownMenuLabel>{menu.label}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {menu.children.map((child) => {
+              const ChildIcon = child.icon;
+              const active = isActive(path, child);
+              return (
+                <DropdownMenuItem key={child.href} asChild className={cn(active && "bg-accent font-medium")}>
+                  <Link href={child.href} aria-current={active ? "page" : undefined}>
+                    <ChildIcon aria-hidden />
+                    {child.label}
+                  </Link>
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+
+    return (
+      <>
+        {showAccordion && accordion}
+        {showFlyout && flyout}
+      </>
     );
   }
 
