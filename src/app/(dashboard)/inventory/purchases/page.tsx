@@ -8,18 +8,10 @@ import { Empty, ErrorNotice, Loading, PageHeader } from "@/components/page-ui";
 import { api } from "@/lib/api";
 import { rupiah } from "@/lib/format";
 import type { InventoryItem, InventoryUnit, PurchaseReceipt, StockLocation } from "@/lib/types";
-import { dateTime, Feedback, PageResult, Pager, quantity, useDebounced } from "../inventory-ui";
+import { dateTime, Feedback, PageResult, Pager, quantity, receivingUnits, useDebounced } from "../inventory-ui";
 
 type ReceiptLine = { id: string; itemId: string; unitId: string; quantity: string; unitPrice: string };
 const blankLine = (id: string): ReceiptLine => ({ id, itemId: "", unitId: "", quantity: "", unitPrice: "" });
-
-/** Units a purchase of this item can be received in: its base unit, units of the same dimension, and its active conversions. */
-function receivingUnits(item: InventoryItem | undefined, units: InventoryUnit[]) {
-  if (!item) return [];
-  const converted = (item.conversions ?? []).filter((conversion) => !conversion.validTo).map((conversion) => conversion.unit);
-  const sameDimension = units.filter((unit) => unit.dimension === item.baseUnit.dimension);
-  return [item.baseUnit, ...sameDimension, ...converted].filter((unit, index, all) => all.findIndex((other) => other.id === unit.id) === index);
-}
 
 export default function InventoryPurchasesPage() {
   const queryClient = useQueryClient();

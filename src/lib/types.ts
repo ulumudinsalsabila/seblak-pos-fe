@@ -240,3 +240,58 @@ export type StockMovement = {
   location: StockLocation;
   actor?: { id: string; name: string } | null;
 };
+export type StockAdjustmentKind = "WASTE" | "ADJUSTMENT";
+export type StockAdjustmentReason = "EXPIRED" | "SPOILED" | "SPILLED" | "DAMAGED" | "STAFF_MEAL" | "COUNT_CORRECTION" | "FOUND" | "OTHER";
+export type StockAdjustment = {
+  id: string;
+  kind: StockAdjustmentKind;
+  reason: StockAdjustmentReason;
+  notes?: string | null;
+  /** Net stock value change: negative when stock went out. Absent without cost access, null when a line has no cost. */
+  totalAmount?: string | null;
+  occurredAt: string;
+  location: { id: string; name: string; code: string };
+  createdBy?: { id: string; name: string } | null;
+  lines: Array<{
+    id: string;
+    direction: "IN" | "OUT";
+    inputQuantity: string;
+    quantity: string;
+    unitCost?: string | null;
+    amount?: string | null;
+    item: InventoryItem;
+    unit: InventoryUnit;
+  }>;
+};
+export type StocktakeStatus = "COUNTING" | "REVIEW" | "POSTED" | "CANCELLED";
+type Person = { id: string; name: string } | null;
+export type Stocktake = {
+  id: string;
+  status: StocktakeStatus;
+  notes?: string | null;
+  createdAt: string;
+  submittedAt?: string | null;
+  postedAt?: string | null;
+  cancelledAt?: string | null;
+  cancelReason?: string | null;
+  location: { id: string; name: string; code: string };
+  createdBy?: Person;
+  submittedBy?: Person;
+  approvedBy?: Person;
+  cancelledBy?: Person;
+  _count?: { lines: number };
+  lines?: Array<{
+    id: string;
+    inputQuantity: string;
+    countedQuantity: string;
+    expectedQuantity: string;
+    varianceQuantity: string;
+    unitCost?: string | null;
+    varianceAmount?: string | null;
+    notes?: string | null;
+    countedAt: string;
+    item: InventoryItem;
+    unit: InventoryUnit;
+    countedBy?: Person;
+  }>;
+};

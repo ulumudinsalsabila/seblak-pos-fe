@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import type { InventoryItem, InventoryUnit } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export type PageResult<T> = {
@@ -19,8 +20,18 @@ const inventoryLinks = [
   { href: "/inventory/units", label: "Satuan", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/opening-balances", label: "Saldo awal", roles: ["OWNER"] },
   { href: "/inventory/purchases", label: "Pembelian", roles: ["OWNER", "MANAGER"] },
+  { href: "/inventory/adjustments", label: "Waste & penyesuaian", roles: ["OWNER", "MANAGER"] },
+  { href: "/inventory/stocktakes", label: "Stock opname", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/movements", label: "Kartu stok", roles: ["OWNER", "MANAGER"] },
 ];
+
+/** Units stock of this item can be entered in: its base unit, units of the same dimension, and its active conversions. */
+export function receivingUnits(item: InventoryItem | undefined, units: InventoryUnit[]) {
+  if (!item) return [];
+  const converted = (item.conversions ?? []).filter((conversion) => !conversion.validTo).map((conversion) => conversion.unit);
+  const sameDimension = units.filter((unit) => unit.dimension === item.baseUnit.dimension);
+  return [item.baseUnit, ...sameDimension, ...converted].filter((unit, index, all) => all.findIndex((other) => other.id === unit.id) === index);
+}
 
 export function InventoryNav() {
   const path = usePathname();
@@ -160,3 +171,28 @@ export const movementTypeLabel: Record<string, string> = {
   ADJUSTMENT_POSTED: "Penyesuaian",
   STOCKTAKE_VARIANCE_POSTED: "Selisih stock opname",
 };
+
+export const adjustmentReasonLabel: Record<string, string> = {
+  EXPIRED: "Kedaluwarsa",
+  SPOILED: "Basi / rusak",
+  SPILLED: "Tumpah",
+  DAMAGED: "Rusak fisik",
+  STAFF_MEAL: "Makan karyawan",
+  COUNT_CORRECTION: "Koreksi hitungan",
+  FOUND: "Ditemukan",
+  OTHER: "Lainnya",
+};
+
+export const stocktakeStatusLabel: Record<string, string> = {
+  COUNTING: "Menghitung",
+  REVIEW: "Menunggu persetujuan",
+  POSTED: "Diposting",
+  CANCELLED: "Dibatalkan",
+};
+
+/** Signed rupiah value, e.g. "+Rp 1.200" or "−Rp 800". */
+export function signedRupiah(value: string | number, format: (value: number) => string) {
+  const amount = Math.round(Number(value));
+  if (amount === 0) return format(0);
+  return `${amount > 0 ? "+" : "−"}${format(Math.abs(amount))}`;
+}
