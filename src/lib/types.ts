@@ -241,7 +241,7 @@ export type StockMovement = {
   actor?: { id: string; name: string } | null;
 };
 export type StockAdjustmentKind = "WASTE" | "ADJUSTMENT";
-export type StockAdjustmentReason = "EXPIRED" | "SPOILED" | "SPILLED" | "DAMAGED" | "STAFF_MEAL" | "COUNT_CORRECTION" | "FOUND" | "OTHER";
+export type StockAdjustmentReason = "EXPIRED" | "SPOILED" | "SPILLED" | "DAMAGED" | "STAFF_MEAL" | "COUNT_CORRECTION" | "FOUND" | "OTHER" | "VOIDED_ORDER";
 export type StockAdjustment = {
   id: string;
   kind: StockAdjustmentKind;
@@ -294,4 +294,19 @@ export type Stocktake = {
     unit: InventoryUnit;
     countedBy?: Person;
   }>;
+};
+export type MenuOptionConsumptionRow = {
+  id: string;
+  groupId: string;
+  valueId: string;
+  quantity: string;
+  location: { id: string; name: string; code: string };
+  item: InventoryItem;
+};
+export type MenuOptionConsumptionGroup = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  categoryIds: string[];
+  values: Array<{ id: string; label: string; consumption: MenuOptionConsumptionRow[] }>;
 };

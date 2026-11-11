@@ -90,6 +90,10 @@ export default function TransactionDetail({
                 Void
               </button>
             </div>
+            <p className="mt-2 text-xs text-[#796c63]">
+              Produk kemasan dan menu yang belum selesai dimasak dikembalikan ke
+              stok. Bahan menu yang sudah selesai dimasak dicatat sebagai waste.
+            </p>
             {voidMutation.error && (
               <div className="mt-3">
                 <ErrorNotice error={voidMutation.error} />

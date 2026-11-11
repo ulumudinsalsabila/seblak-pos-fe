@@ -16,6 +16,7 @@ const inventoryLinks = [
   { href: "/inventory", label: "Ringkasan", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/items", label: "Item stok", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/recipes", label: "Resep", roles: ["OWNER", "MANAGER"] },
+  { href: "/inventory/menu-options", label: "Bahan opsi menu", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/locations", label: "Lokasi", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/units", label: "Satuan", roles: ["OWNER", "MANAGER"] },
   { href: "/inventory/opening-balances", label: "Saldo awal", roles: ["OWNER"] },
@@ -181,6 +182,7 @@ export const adjustmentReasonLabel: Record<string, string> = {
   COUNT_CORRECTION: "Koreksi hitungan",
   FOUND: "Ditemukan",
   OTHER: "Lainnya",
+  VOIDED_ORDER: "Pesanan di-void",
 };
 
 export const stocktakeStatusLabel: Record<string, string> = {
